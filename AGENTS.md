@@ -28,3 +28,17 @@ Recent history favors imperative Conventional Commit subjects such as `feat: bun
 ## Release Workflow
 
 For versioning, tagging, or publishing a GitHub Release, use `./script/release.sh` and follow its `--help`. A release is complete only after GitHub Actions succeeds and the Release contains both `x86_64` and `arm64` DMGs with their SHA-256 files.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues for `def-peter/CueDex`. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five default triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+This is a single-context repository. See `docs/agents/domain.md`.
