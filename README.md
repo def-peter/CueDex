@@ -45,14 +45,14 @@ The recordings show CueDex running around a real macOS Codex workspace. Colors, 
 
 ## 🔔 Features
 
-- Main-agent completion events through the Codex `Stop` lifecycle hook; subagent completions are ignored
-- GPU-driven monochrome breathing glow or two-color emergency-style edge flash across every connected display
-- Custom colors, intensity, duration, macOS sounds, imported audio, and volume
-- Custom spoken messages and system voices through Apple's native `AVSpeechSynthesizer`
-- Pause, quiet hours, launch at login, and one-click cue previews
-- Runtime Simplified Chinese and English switching, with Chinese as the default
-- Lightweight daily GitHub Release checks plus a manual check in About
-- Event-driven local processing with no polling, analytics, or prompt/response storage
+- 🎯 Main-agent completion events through the Codex `Stop` lifecycle hook; subagent completions are ignored
+- 🌈 GPU-driven monochrome breathing glow or two-color emergency-style edge flash across every connected display
+- 🎛️ Custom colors, intensity, duration, macOS sounds, imported audio, and volume
+- 🗣️ Custom spoken messages and system voices through Apple's native `AVSpeechSynthesizer`
+- 🌙 Pause, quiet hours, launch at login, and one-click cue previews
+- 🌐 Runtime Simplified Chinese and English switching, with Chinese as the default
+- 🔄 Lightweight daily GitHub Release checks plus a manual check in About
+- 🔒 Event-driven local processing with no polling, analytics, or prompt/response storage
 
 ## 📥 Install
 
@@ -71,7 +71,7 @@ The recordings show CueDex running around a real macOS Codex workspace. Colors, 
 
 Every Release includes a SHA-256 file for verifying download integrity.
 
-## Connect to Codex
+## 🔌 Connect to Codex
 
 1. Open CueDex and select **General > Enable Integration**.
 2. CueDex adds its `Stop` handler to `~/.codex/hooks.json` without replacing other hooks or an existing `notify` command.
@@ -80,13 +80,13 @@ Every Release includes a SHA-256 file for verifying download integrity.
 
 Once trusted, CueDex stays in the menu bar and responds only when the main agent finishes with a new assistant message.
 
-## How It Works
+## ⚙️ How It Works
 
 Codex invokes a small local helper for the main agent's `Stop` event. The helper validates that the turn contains a new assistant message, deduplicates repeated `turn_id` values, writes an empty event marker under `~/Library/Application Support/CueDex`, and wakes the app. A dispatch file-system source consumes fresh markers without polling.
 
 Prompt and response content are never persisted or sent anywhere. CueDex only contacts the GitHub Releases API for its low-frequency update check.
 
-## Development
+## 🛠️ Development
 
 Build and launch the Debug app with the Codex Run action or:
 
@@ -103,7 +103,7 @@ xcodebuild -project CueDex.xcodeproj -scheme CueDex \
   CODE_SIGNING_ALLOWED=NO test
 ```
 
-## Packaging and Release
+## 📦 Packaging and Release
 
 Build an unsigned, universal DMG for Intel and Apple silicon:
 
@@ -144,6 +144,6 @@ If CueDex is useful to you, a star helps more people find it.
   </picture>
 </a>
 
-## License
+## 📄 License
 
 Created by Peter Li. CueDex is available under the [MIT License](LICENSE).

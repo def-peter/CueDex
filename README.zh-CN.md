@@ -45,14 +45,14 @@
 
 ## 🔔 功能
 
-- 通过 Codex `Stop` 生命周期钩子监听主 Agent 完成事件，不会因子 Agent 完成而误报
-- 使用 GPU 渲染单色呼吸光或双色警灯式边缘闪烁，覆盖所有已连接显示器
-- 支持自定义颜色、强度、持续时间、macOS 提示音、本地音频和音量
-- 通过 Apple 原生 `AVSpeechSynthesizer` 播放自定义文字，并可选择系统说话人
-- 支持暂停提醒、免打扰、登录时启动和一键预览
-- 支持运行时切换简体中文和英文，默认使用中文
-- 每天轻量检查一次 GitHub Release，也可在“关于”中手动检查
-- 事件驱动的本机处理，不轮询、不使用分析服务、不保存提示词或回复内容
+- 🎯 通过 Codex `Stop` 生命周期钩子监听主 Agent 完成事件，不会因子 Agent 完成而误报
+- 🌈 使用 GPU 渲染单色呼吸光或双色警灯式边缘闪烁，覆盖所有已连接显示器
+- 🎛️ 支持自定义颜色、强度、持续时间、macOS 提示音、本地音频和音量
+- 🗣️ 通过 Apple 原生 `AVSpeechSynthesizer` 播放自定义文字，并可选择系统说话人
+- 🌙 支持暂停提醒、免打扰、登录时启动和一键预览
+- 🌐 支持运行时切换简体中文和英文，默认使用中文
+- 🔄 每天轻量检查一次 GitHub Release，也可在“关于”中手动检查
+- 🔒 事件驱动的本机处理，不轮询、不使用分析服务、不保存提示词或回复内容
 
 ## 📥 安装
 
@@ -70,7 +70,7 @@
 
 每个 Release 都附带 SHA-256 文件，可用于校验下载完整性。
 
-## 连接 Codex
+## 🔌 连接 Codex
 
 1. 打开 CueDex，选择**通用 > 启用集成**。
 2. CueDex 会向 `~/.codex/hooks.json` 添加自己的 `Stop` 处理器，不会覆盖其他钩子或已有的 `notify` 命令。
@@ -79,13 +79,13 @@
 
 信任后，CueDex 会常驻菜单栏，并且只在主 Agent 产生新的回复并完成时提醒。
 
-## 工作原理
+## ⚙️ 工作原理
 
 Codex 在主 Agent 触发 `Stop` 事件时调用一个轻量的本地辅助程序。辅助程序会确认本轮包含新的 AI 回复，对重复的 `turn_id` 去重，在 `~/Library/Application Support/CueDex` 中写入空事件标记，并唤醒 CueDex。文件系统事件源会直接消费新标记，不需要轮询。
 
 提示词和回复内容不会被保存或发送到任何地方。CueDex 只会为了低频更新检查访问 GitHub Releases API。
 
-## 开发
+## 🛠️ 开发
 
 使用 Codex 的 Run 操作，或者执行以下命令构建并启动 Debug App：
 
@@ -102,7 +102,7 @@ xcodebuild -project CueDex.xcodeproj -scheme CueDex \
   CODE_SIGNING_ALLOWED=NO test
 ```
 
-## 打包与发布
+## 📦 打包与发布
 
 构建同时支持 Intel 和 Apple 芯片的未签名通用 DMG：
 
@@ -143,6 +143,6 @@ xcodebuild -project CueDex.xcodeproj -scheme CueDex \
   </picture>
 </a>
 
-## 许可证
+## 📄 许可证
 
 由 Peter Li 创作。CueDex 使用 [MIT 许可证](LICENSE)发布。
