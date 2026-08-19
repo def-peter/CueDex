@@ -1,99 +1,143 @@
-# CueDex
+<p align="center">
+  <img src="CueDex/Assets.xcassets/AppIcon.appiconset/icon_128x128@2x.png" width="112" alt="CueDex app icon">
+</p>
 
-[English](README.md) | [简体中文](README.zh-CN.md)
+<h1 align="center">CueDex</h1>
 
-[![Release](https://img.shields.io/github/v/release/def-peter/CueDex?style=flat-square)](https://github.com/def-peter/CueDex/releases/latest)
-[![Downloads](https://img.shields.io/github/downloads/def-peter/CueDex/total?style=flat-square)](https://github.com/def-peter/CueDex/releases)
-![macOS 14+](https://img.shields.io/badge/macOS-14%2B-2ea44f?style=flat-square&logo=apple)
-[![Release workflow](https://img.shields.io/github/actions/workflow/status/def-peter/CueDex/release.yml?style=flat-square&label=release)](https://github.com/def-peter/CueDex/actions/workflows/release.yml)
-[![GitHub Stars](https://img.shields.io/github/stars/def-peter/CueDex?style=flat-square)](https://github.com/def-peter/CueDex/stargazers)
-[![License](https://img.shields.io/github/license/def-peter/CueDex?style=flat-square)](LICENSE)
+<p align="center"><strong>Know when Codex is done, even when you are looking elsewhere.</strong></p>
 
-CueDex is a native macOS menu-bar utility that signals when a Codex turn finishes. It uses a soft screen-edge glow across every connected display and an optional sound cue.
+<p align="center">
+  A lightweight native macOS utility that uses screen-edge glow, sound, or speech<br>
+  when the main Codex agent finishes responding.
+</p>
 
-## Features
+<p align="center">
+  <a href="README.md">English</a> · <a href="README.zh-CN.md">简体中文</a>
+</p>
 
-- Main-agent completion events through the official Codex `Stop` lifecycle hook
-- GPU-driven monochrome breathing glow or two-color emergency-style flash, with custom colors, intensity, and duration
-- Built-in macOS sounds or a custom local audio file
-- Custom spoken completion messages through Apple's native `AVSpeechSynthesizer`
-- Runtime Simplified Chinese and English switching, with Chinese as the default
+<p align="center">
+  <a href="https://github.com/def-peter/CueDex/releases/latest"><img src="https://img.shields.io/github/v/release/def-peter/CueDex?style=flat-square" alt="Latest release"></a>
+  <a href="https://github.com/def-peter/CueDex/releases"><img src="https://img.shields.io/github/downloads/def-peter/CueDex/total?style=flat-square" alt="Downloads"></a>
+  <img src="https://img.shields.io/badge/macOS-14%2B-2ea44f?style=flat-square&logo=apple" alt="macOS 14 or later">
+  <a href="https://github.com/def-peter/CueDex/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/def-peter/CueDex/release.yml?style=flat-square&label=release" alt="Release workflow"></a>
+  <a href="https://github.com/def-peter/CueDex/stargazers"><img src="https://img.shields.io/github/stars/def-peter/CueDex?style=flat-square" alt="GitHub stars"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/def-peter/CueDex?style=flat-square" alt="MIT license"></a>
+</p>
+
+CueDex is useful when a Codex task takes long enough for you to switch to another window or step away. It listens for the completion event locally and gives you a visible or audible cue without persisting or sending the conversation.
+
+## ✨ See It in Action
+
+<table>
+  <tr>
+    <td align="center" width="50%">
+      <img src=".github/assets/cuedex-breathing-glow.gif" alt="Green monochrome breathing glow around the screen" width="100%">
+      <br><sub><strong>Breathing glow</strong> · one color, soft rise and fade</sub>
+    </td>
+    <td align="center" width="50%">
+      <img src=".github/assets/cuedex-two-color-flash.gif" alt="Red and blue alternating edge flash around the screen" width="100%">
+      <br><sub><strong>Two-color flash</strong> · alternating edge light, red and blue by default</sub>
+    </td>
+  </tr>
+</table>
+
+The recordings show CueDex running around a real macOS Codex workspace. Colors, intensity, and duration are configurable.
+
+## 🔔 Features
+
+- Main-agent completion events through the Codex `Stop` lifecycle hook; subagent completions are ignored
+- GPU-driven monochrome breathing glow or two-color emergency-style edge flash across every connected display
+- Custom colors, intensity, duration, macOS sounds, imported audio, and volume
+- Custom spoken messages and system voices through Apple's native `AVSpeechSynthesizer`
 - Pause, quiet hours, launch at login, and one-click cue previews
-- Lightweight daily GitHub Release checks, plus a manual check in About
-- Local event processing with no prompt or response content stored
+- Runtime Simplified Chinese and English switching, with Chinese as the default
+- Lightweight daily GitHub Release checks plus a manual check in About
+- Event-driven local processing with no polling, analytics, or prompt/response storage
 
-## Run
+## 📥 Install
 
-Use the Codex Run action or:
+**Requirements:** macOS 14 or later, on either Intel or Apple silicon.
+
+1. Download the correct DMG from the [latest GitHub Release](https://github.com/def-peter/CueDex/releases/latest): `arm64` for Apple silicon (M1 or later), or `x86_64` for Intel.
+2. Open the DMG and move `CueDex.app` to `/Applications`.
+3. Launch CueDex and complete the Codex integration steps below.
+
+> [!IMPORTANT]
+> CueDex is ad-hoc signed but is not notarized because it does not currently use
+> a paid Apple Developer ID certificate. macOS may block the first launch or say
+> that it cannot verify the developer. This is an expected Gatekeeper warning,
+> not a malware detection. Open **System Settings > Privacy & Security**, find
+> the CueDex message, choose **Open Anyway**, and confirm.
+
+Every Release includes a SHA-256 file for verifying download integrity.
+
+## Connect to Codex
+
+1. Open CueDex and select **General > Enable Integration**.
+2. CueDex adds its `Stop` handler to `~/.codex/hooks.json` without replacing other hooks or an existing `notify` command.
+3. Open **Codex Settings > Hooks** and review and trust the CueDex hook.
+4. If the hook does not appear, restart ChatGPT and check again.
+
+Once trusted, CueDex stays in the menu bar and responds only when the main agent finishes with a new assistant message.
+
+## How It Works
+
+Codex invokes a small local helper for the main agent's `Stop` event. The helper validates that the turn contains a new assistant message, deduplicates repeated `turn_id` values, writes an empty event marker under `~/Library/Application Support/CueDex`, and wakes the app. A dispatch file-system source consumes fresh markers without polling.
+
+Prompt and response content are never persisted or sent anywhere. CueDex only contacts the GitHub Releases API for its low-frequency update check.
+
+## Development
+
+Build and launch the Debug app with the Codex Run action or:
 
 ```bash
 ./script/build_and_run.sh
 ```
 
-The app targets macOS 14 or later. Open the General tab and choose **Enable Integration**. CueDex adds a `Stop` handler to `~/.codex/hooks.json` without replacing other hooks or the existing `notify` command. Open **Codex Settings > Hooks** to review and trust the CueDex hook the first time it is installed. If the hook does not appear, restart ChatGPT and check again.
+Run unit and UI tests:
 
-## Installation
+```bash
+xcodebuild -project CueDex.xcodeproj -scheme CueDex \
+  -destination 'platform=macOS' \
+  -derivedDataPath .build/TestDerivedData \
+  CODE_SIGNING_ALLOWED=NO test
+```
 
-> [!IMPORTANT]
-> CueDex does not currently use a paid Apple Developer ID certificate and is
-> therefore not notarized by Apple. macOS may block the first launch or report
-> that it cannot verify the developer. This Gatekeeper warning is caused by the
-> missing signature and notarization; it is not a malware detection.
+## Packaging and Release
 
-To open CueDex after downloading it from the official
-[GitHub Releases](https://github.com/def-peter/CueDex/releases):
-
-1. Move `CueDex.app` to the Applications folder and try to open it once.
-2. Open **System Settings > Privacy & Security**.
-3. Find the blocked CueDex message, click **Open Anyway**, and confirm.
-
-Each Release includes SHA-256 files for download integrity verification.
-
-## Package
-
-Build an unsigned, universal DMG for Intel and Apple silicon Macs:
+Build an unsigned, universal DMG for Intel and Apple silicon:
 
 ```bash
 ./script/package_unsigned.sh
 ```
 
-Build for one architecture only:
+Or build one architecture:
 
 ```bash
 ./script/package_unsigned.sh --arch x86_64
 ./script/package_unsigned.sh --arch arm64
 ```
 
-The default build contains both `x86_64` and `arm64`. Every mode applies an
-ad-hoc signature, verifies the requested executable architecture, verifies the
-bundle and disk image, and writes the DMG and its SHA-256 checksum under
-`dist/`.
-
-This package is not notarized. On first launch, macOS may require the user to
-approve CueDex in **System Settings > Privacy & Security**.
-
-## Release
-
-Run the interactive release command from `main`:
+To publish a new version from `main`:
 
 ```bash
 ./script/release.sh
 ```
 
-It updates the app version and build number, creates the release commit and
-tag, then pushes them to GitHub. The tag triggers GitHub Actions, which builds
-separate `x86_64` and `arm64` DMGs and publishes them with SHA-256 checksums.
-Use `./script/release.sh --dry-run --version <x.y.z>` to preview the process
-without changing files, commits, tags, or remotes.
+The release script updates the version and build number, creates the release commit and tag, and pushes them to GitHub. GitHub Actions builds separate `x86_64` and `arm64` DMGs, verifies their SHA-256 checksums, and attaches all artifacts to the Release.
 
-## Architecture
+Use `./script/release.sh --dry-run --version <x.y.z>` to preview the release without modifying files, commits, tags, or remotes.
 
-Codex invokes a small local helper only for the main agent's `Stop` lifecycle event. The helper validates that the turn contains a new assistant message, deduplicates repeated `turn_id` values, writes an empty event marker under `~/Library/Application Support/CueDex`, and wakes CueDex. Prompt and response content are never persisted. Subagents emit `SubagentStop`, which CueDex does not register. A dispatch file-system source consumes fresh markers without polling. Test builds disable these runtime services so they cannot replace or duplicate the installed app's integration.
+## 💬 Feedback
 
-## Star History
+Bug reports and feature ideas are welcome in [GitHub Issues](https://github.com/def-peter/CueDex/issues), or by email at [guanzhen.li@foxmail.com](mailto:guanzhen.li@foxmail.com).
+
+## ⭐ Star History
+
+If CueDex is useful to you, a star helps more people find it.
 
 [![Star History Chart](https://api.star-history.com/svg?repos=def-peter/CueDex&type=Date)](https://www.star-history.com/#def-peter/CueDex&Date)
 
 ## License
 
-CueDex is available under the [MIT License](LICENSE).
+Created by Peter Li. CueDex is available under the [MIT License](LICENSE).
