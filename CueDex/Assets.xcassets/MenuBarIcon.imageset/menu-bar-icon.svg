@@ -1,8 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 18 18">
-  <g fill="#000">
-    <rect x="6.75" y="1" width="4.5" height="6.5" rx="2.25"/>
-    <rect x="6.75" y="10.5" width="4.5" height="6.5" rx="2.25"/>
-    <rect x="1" y="6.75" width="6.5" height="4.5" rx="2.25"/>
-    <rect x="10.5" y="6.75" width="6.5" height="4.5" rx="2.25"/>
+  <defs>
+    <mask id="flower-cutout">
+      <rect width="18" height="18" fill="#fff"/>
+      <ellipse cx="9" cy="7" rx="2.4" ry="3" fill="#000"/>
+      <ellipse cx="9" cy="10" rx="2.4" ry="3" fill="#000"/>
+      <ellipse cx="7.2" cy="8.5" rx="3" ry="2.4" fill="#000"/>
+      <ellipse cx="10.8" cy="8.5" rx="3" ry="2.4" fill="#000"/>
+      <ellipse cx="9" cy="6.45" rx="0.78" ry="1.3" fill="#fff"/>
+      <ellipse cx="9" cy="10.55" rx="0.78" ry="1.3" fill="#fff"/>
+      <ellipse cx="6.55" cy="8.5" rx="1.3" ry="0.78" fill="#fff"/>
+      <ellipse cx="11.45" cy="8.5" rx="1.3" ry="0.78" fill="#fff"/>
+    </mask>
+  </defs>
+  <g fill="#000" mask="url(#flower-cutout)">
+    <ellipse cx="9" cy="15.45" rx="1.6" ry="1.55"/>
+    <ellipse cx="9" cy="2.15" rx="1.35" ry="1.35"/>
+    <path d="M9 2.4C5.95 2.4 4.05 4.76 4.05 8.08v2.46c0 1.54-.62 2.43-2.03 3.65-.56.48-.22 1.39.5 1.39h12.96c.72 0 1.06-.91.5-1.39-1.41-1.22-2.03-2.11-2.03-3.65V8.08C13.95 4.76 12.05 2.4 9 2.4Z"/>
   </g>
 </svg>
