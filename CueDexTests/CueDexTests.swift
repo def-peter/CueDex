@@ -1,10 +1,17 @@
 import AVFoundation
+import AppKit
 import Foundation
 import SwiftUI
 import Testing
 @testable import CueDex
 
 struct CueDexTests {
+    @Test @MainActor func menuBarAppConfigurationIsBundled() {
+        #expect(Bundle.main.object(forInfoDictionaryKey: "LSUIElement") as? Bool == true)
+        #expect(NSImage(named: "MenuBarIcon") != nil)
+        #expect(NSImage(named: "MenuBarIconPaused") != nil)
+    }
+
     @Test func releaseVersionsCompareNumerically() {
         #expect(AppVersion.isNewer("v1.0.10", than: "1.0.9"))
         #expect(!AppVersion.isNewer("v1.0.2", than: "1.0.2"))

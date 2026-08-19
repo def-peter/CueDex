@@ -3,7 +3,7 @@ import SwiftUI
 
 struct MenuBarView: View {
     let model: AppModel
-    @Environment(\.openWindow) private var openWindow
+    @Environment(\.openSettings) private var openSettings
 
     var body: some View {
         Group {
@@ -17,7 +17,7 @@ struct MenuBarView: View {
             Divider()
 
             Button("Settings", systemImage: "gearshape") {
-                openWindow(id: "settings")
+                openSettings()
                 NSApp.activate(ignoringOtherApps: true)
             }
             .keyboardShortcut(",")

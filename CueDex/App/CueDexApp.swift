@@ -3,8 +3,7 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApp.setActivationPolicy(.regular)
-        NSApp.activate(ignoringOtherApps: true)
+        NSApp.setActivationPolicy(.accessory)
         AppModel.shared.start()
     }
 }
@@ -15,17 +14,17 @@ struct CueDexApp: App {
     private let model = AppModel.shared
 
     var body: some Scene {
-        Window("CueDex", id: "settings") {
-            ContentView(model: model)
-        }
-        .defaultSize(width: 520, height: 430)
-        .windowResizability(.contentSize)
-
         MenuBarExtra {
             MenuBarView(model: model)
         } label: {
-            Image(systemName: model.preferences.isPaused ? "bell.slash.fill" : "bell.fill")
+            CueDexStatusIcon(isPaused: model.preferences.isPaused)
+                .accessibilityLabel("CueDex")
+                .help("CueDex")
         }
         .menuBarExtraStyle(.menu)
+
+        Settings {
+            ContentView(model: model)
+        }
     }
 }
