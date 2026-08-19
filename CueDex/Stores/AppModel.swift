@@ -10,6 +10,7 @@ final class AppModel {
     let preferences: PreferencesStore
     let integration: CodexIntegrationInstaller
     let loginItem: LoginItemController
+    let updates: UpdateController
 
     private let logger = Logger(subsystem: "com.peter.CueDex", category: "App")
     private let glowController = ScreenGlowController()
@@ -34,6 +35,7 @@ final class AppModel {
         )
         integration = CodexIntegrationInstaller(paths: paths, fileManager: fileManager, defaults: defaults)
         loginItem = LoginItemController()
+        updates = UpdateController(defaults: defaults)
         eventMonitor = CodexEventMonitor(eventsDirectory: paths.eventsDirectory, fileManager: fileManager)
         self.runtimeServicesEnabled = runtimeServicesEnabled
     }
@@ -49,6 +51,7 @@ final class AppModel {
 #if !DEBUG
         integration.refreshHelperIfInstalled()
 #endif
+        Task { await updates.checkAutomaticallyIfNeeded() }
 
         do {
             try eventMonitor.start { [weak self] in

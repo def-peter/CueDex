@@ -5,6 +5,32 @@ import Testing
 @testable import CueDex
 
 struct CueDexTests {
+    @Test func releaseVersionsCompareNumerically() {
+        #expect(AppVersion.isNewer("v1.0.10", than: "1.0.9"))
+        #expect(!AppVersion.isNewer("v1.0.2", than: "1.0.2"))
+        #expect(!AppVersion.isNewer("v1.0.1", than: "1.0.2"))
+    }
+
+    @Test func githubReleaseResponseIsDecoded() throws {
+        let data = try #require(
+            #"{"tag_name":"v1.2.3","html_url":"https://github.com/def-peter/CueDex/releases/tag/v1.2.3"}"#
+                .data(using: .utf8)
+        )
+
+        let release = try GitHubReleaseClient.decodeRelease(from: data)
+
+        #expect(release.version == "1.2.3")
+        #expect(release.pageURL.absoluteString.hasSuffix("/v1.2.3"))
+    }
+
+    @Test func automaticUpdateChecksAreLimitedToOncePerDay() {
+        let now = Date(timeIntervalSince1970: 2_000_000)
+
+        #expect(UpdateController.shouldCheckAutomatically(lastCheck: nil, now: now))
+        #expect(!UpdateController.shouldCheckAutomatically(lastCheck: now.addingTimeInterval(-60), now: now))
+        #expect(UpdateController.shouldCheckAutomatically(lastCheck: now.addingTimeInterval(-86_400), now: now))
+    }
+
     @Test func quietHoursAcrossMidnight() throws {
         var preferences = CuePreferences.defaults
         preferences.quietHoursEnabled = true
@@ -137,6 +163,9 @@ struct CueDexTests {
         #expect(localizationBundle.localizedString(forKey: "Author", value: nil, table: nil) == "作者")
         #expect(localizationBundle.localizedString(forKey: "Feedback Email", value: nil, table: nil) == "反馈邮箱")
         #expect(localizationBundle.localizedString(forKey: "Build", value: nil, table: nil) == "构建")
+        #expect(localizationBundle.localizedString(forKey: "Updates", value: nil, table: nil) == "更新")
+        #expect(localizationBundle.localizedString(forKey: "Check for Updates", value: nil, table: nil) == "检查更新")
+        #expect(localizationBundle.localizedString(forKey: "Update Available", value: nil, table: nil) == "发现新版本")
         #expect(
             localizationBundle.localizedString(
                 forKey: "CueDex notifies you with screen-edge glow, sound, or speech when Codex finishes responding.",

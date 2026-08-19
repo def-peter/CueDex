@@ -19,6 +19,7 @@ CueDex is a native macOS menu-bar utility that signals when a Codex turn finishe
 - Custom spoken completion messages through Apple's native `AVSpeechSynthesizer`
 - Runtime Simplified Chinese and English switching, with Chinese as the default
 - Pause, quiet hours, launch at login, and one-click cue previews
+- Lightweight daily GitHub Release checks, plus a manual check in About
 - Local event processing with no prompt or response content stored
 
 ## Run

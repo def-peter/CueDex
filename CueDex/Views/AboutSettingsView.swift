@@ -2,6 +2,7 @@ import AppKit
 import SwiftUI
 
 struct AboutSettingsView: View {
+    let updates: UpdateController
     private let feedbackAddress = "guanzhen.li@foxmail.com"
 
     var body: some View {
@@ -58,6 +59,12 @@ struct AboutSettingsView: View {
                         Text(verbatim: feedbackAddress)
                     }
                 }
+
+                GridRow {
+                    Text("Updates")
+                        .foregroundStyle(.secondary)
+                    updateControls
+                }
             }
             .padding(.top, 24)
 
@@ -78,9 +85,47 @@ struct AboutSettingsView: View {
     private var feedbackURL: URL {
         URL(string: "mailto:\(feedbackAddress)")!
     }
+
+    private var isChecking: Bool {
+        updates.state == .checking
+    }
+
+    @ViewBuilder
+    private var updateControls: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Button {
+                Task { await updates.checkManually() }
+            } label: {
+                if isChecking {
+                    HStack(spacing: 6) {
+                        ProgressView()
+                            .controlSize(.small)
+                        Text("Checking for Updates...")
+                    }
+                } else {
+                    Label("Check for Updates", systemImage: "arrow.clockwise")
+                }
+            }
+            .disabled(isChecking)
+
+            switch updates.state {
+            case .idle, .checking:
+                EmptyView()
+            case .upToDate:
+                Text("You're up to date.")
+                    .foregroundStyle(.secondary)
+            case let .updateAvailable(release):
+                Link("View Release", destination: release.pageURL)
+            case .failed:
+                Text("Unable to check for updates.")
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .font(.subheadline)
+    }
 }
 
 #Preview {
-    AboutSettingsView()
+    AboutSettingsView(updates: UpdateController())
         .frame(width: 520, height: 430)
 }
