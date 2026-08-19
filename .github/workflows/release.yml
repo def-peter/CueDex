@@ -1,0 +1,57 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish macOS packages
+    runs-on: macos-15
+
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v5
+
+      - name: Verify tag matches the app version
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(awk -F ' = ' '$1 == "MARKETING_VERSION" { print $2 }' Config/Version.xcconfig)"
+          if [[ "$GITHUB_REF_NAME" != "v$version" ]]; then
+            echo "Tag $GITHUB_REF_NAME does not match app version $version" >&2
+            exit 1
+          fi
+
+      - name: Build Intel package
+        run: ./script/package_unsigned.sh --arch x86_64
+
+      - name: Build Apple silicon package
+        run: ./script/package_unsigned.sh --arch arm64
+
+      - name: Verify checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd dist
+          shasum -a 256 -c ./*.sha256
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; then
+            gh release upload "$GITHUB_REF_NAME" dist/*.dmg dist/*.sha256 --clobber
+          else
+            gh release create "$GITHUB_REF_NAME" \
+              dist/*.dmg dist/*.sha256 \
+              --generate-notes \
+              --title "CueDex ${GITHUB_REF_NAME#v}" \
+              --verify-tag
+          fi

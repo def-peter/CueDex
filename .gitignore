@@ -1,0 +1,7 @@
+.build/
+DerivedData/
+dist/
+*.xcuserstate
+xcuserdata/
+.DS_Store
+*.profraw
