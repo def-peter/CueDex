@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">CueDex AI Bell</title>
+  <desc id="desc">A black notification bell containing a four-loop AI knot, with a blue completion clapper.</desc>
+
+  <rect width="1024" height="1024" fill="#F5F7FA"/>
+
+  <circle cx="512" cy="824" r="72" fill="#3D94FF"/>
+
+  <g fill="#111317">
+    <circle cx="512" cy="202" r="67"/>
+    <path d="M512 206C375 206 292 309 292 454V574C292 641 265 696 218 741C199 759 212 790 239 790H785C812 790 825 759 806 741C759 696 732 641 732 574V454C732 309 649 206 512 206Z"/>
+  </g>
+
+  <g fill="#F5F7FA">
+    <ellipse cx="512" cy="408" rx="88" ry="115"/>
+    <ellipse cx="609" cy="505" rx="115" ry="88"/>
+    <ellipse cx="512" cy="602" rx="88" ry="115"/>
+    <ellipse cx="415" cy="505" rx="115" ry="88"/>
+  </g>
+  <g fill="#111317">
+    <ellipse cx="512" cy="408" rx="40" ry="67"/>
+    <ellipse cx="609" cy="505" rx="67" ry="40"/>
+    <ellipse cx="512" cy="602" rx="40" ry="67"/>
+    <ellipse cx="415" cy="505" rx="67" ry="40"/>
+    <rect x="557" y="421" width="18" height="64" rx="9" transform="rotate(45 566 453)"/>
+    <rect x="557" y="527" width="18" height="64" rx="9" transform="rotate(-45 566 559)"/>
+    <rect x="449" y="527" width="18" height="64" rx="9" transform="rotate(45 458 559)"/>
+    <rect x="449" y="421" width="18" height="64" rx="9" transform="rotate(-45 458 453)"/>
+    <rect x="484" y="477" width="56" height="56" rx="16" transform="rotate(45 512 505)"/>
+  </g>
+
+</svg>

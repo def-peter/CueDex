@@ -5,3 +5,16 @@ dist/
 xcuserdata/
 .DS_Store
 *.profraw
+
+# Generated media and scratch files
+/output/
+/tmp/
+/design/logo-exploration/
+/design/logo-final-v1/AppIcon.appiconset/
+/design/logo-final-v1/MenuBarIcon.imageset/
+/design/logo-final-v1/preview/
+/design/logo-final-v1/variants/
+
+# Local diagnostics
+*.log
+*.xcresult/

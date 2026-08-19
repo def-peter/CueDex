@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" role="img" aria-labelledby="title desc">
+  <title id="title">CueDex macOS App Icon</title>
+  <desc id="desc">CueDex AI notification bell centered on a warm off-white rounded rectangle.</desc>
+
+  <defs>
+    <clipPath id="tile-clip">
+      <rect x="64" y="64" width="896" height="896" rx="202"/>
+    </clipPath>
+    <linearGradient id="top-glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3D94FF" stop-opacity=".90"/>
+      <stop offset=".42" stop-color="#3D94FF" stop-opacity=".324"/>
+      <stop offset="1" stop-color="#3D94FF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="bottom-glow" x1="0" y1="1" x2="0" y2="0">
+      <stop offset="0" stop-color="#3D94FF" stop-opacity=".90"/>
+      <stop offset=".42" stop-color="#3D94FF" stop-opacity=".324"/>
+      <stop offset="1" stop-color="#3D94FF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="left-glow" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#3D94FF" stop-opacity=".90"/>
+      <stop offset=".42" stop-color="#3D94FF" stop-opacity=".324"/>
+      <stop offset="1" stop-color="#3D94FF" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="right-glow" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0" stop-color="#3D94FF" stop-opacity=".90"/>
+      <stop offset=".42" stop-color="#3D94FF" stop-opacity=".324"/>
+      <stop offset="1" stop-color="#3D94FF" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="top-left-glow" cx="100%" cy="100%" r="100%">
+      <stop offset=".322" stop-color="#3D94FF" stop-opacity="0"/>
+      <stop offset=".715" stop-color="#3D94FF" stop-opacity=".324"/>
+      <stop offset="1" stop-color="#3D94FF" stop-opacity=".90"/>
+    </radialGradient>
+    <radialGradient id="top-right-glow" cx="0" cy="100%" r="100%">
+      <stop offset=".322" stop-color="#3D94FF" stop-opacity="0"/>
+      <stop offset=".715" stop-color="#3D94FF" stop-opacity=".324"/>
+      <stop offset="1" stop-color="#3D94FF" stop-opacity=".90"/>
+    </radialGradient>
+    <radialGradient id="bottom-left-glow" cx="100%" cy="0" r="100%">
+      <stop offset=".322" stop-color="#3D94FF" stop-opacity="0"/>
+      <stop offset=".715" stop-color="#3D94FF" stop-opacity=".324"/>
+      <stop offset="1" stop-color="#3D94FF" stop-opacity=".90"/>
+    </radialGradient>
+    <radialGradient id="bottom-right-glow" cx="0" cy="0" r="100%">
+      <stop offset=".322" stop-color="#3D94FF" stop-opacity="0"/>
+      <stop offset=".715" stop-color="#3D94FF" stop-opacity=".324"/>
+      <stop offset="1" stop-color="#3D94FF" stop-opacity=".90"/>
+    </radialGradient>
+    <filter id="border-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feGaussianBlur stdDeviation="32.4"/>
+    </filter>
+  </defs>
+
+  <rect x="64" y="64" width="896" height="896" rx="202" fill="#F5F7FA" stroke="#E1E6ED" stroke-width="2"/>
+
+  <g clip-path="url(#tile-clip)">
+    <rect x="266" y="64" width="492" height="137" fill="url(#top-glow)"/>
+    <rect x="266" y="823" width="492" height="137" fill="url(#bottom-glow)"/>
+    <rect x="64" y="266" width="137" height="492" fill="url(#left-glow)"/>
+    <rect x="823" y="266" width="137" height="492" fill="url(#right-glow)"/>
+    <rect x="64" y="64" width="202" height="202" fill="url(#top-left-glow)"/>
+    <rect x="758" y="64" width="202" height="202" fill="url(#top-right-glow)"/>
+    <rect x="64" y="758" width="202" height="202" fill="url(#bottom-left-glow)"/>
+    <rect x="758" y="758" width="202" height="202" fill="url(#bottom-right-glow)"/>
+    <rect x="66" y="66" width="892" height="892" rx="200" fill="none" stroke="#3D94FF" stroke-width="4.5" opacity=".99" filter="url(#border-shadow)"/>
+    <rect x="66" y="66" width="892" height="892" rx="200" fill="none" stroke="#3D94FF" stroke-width="4.5" opacity="1"/>
+  </g>
+
+  <g transform="translate(51 48) scale(.9)">
+    <circle cx="512" cy="824" r="72" fill="#3D94FF"/>
+
+    <g fill="#111317">
+      <circle cx="512" cy="202" r="67"/>
+      <path d="M512 206C375 206 292 309 292 454V574C292 641 265 696 218 741C199 759 212 790 239 790H785C812 790 825 759 806 741C759 696 732 641 732 574V454C732 309 649 206 512 206Z"/>
+    </g>
+
+    <g fill="#F5F7FA">
+      <ellipse cx="512" cy="408" rx="88" ry="115"/>
+      <ellipse cx="609" cy="505" rx="115" ry="88"/>
+      <ellipse cx="512" cy="602" rx="88" ry="115"/>
+      <ellipse cx="415" cy="505" rx="115" ry="88"/>
+    </g>
+    <g fill="#111317">
+      <ellipse cx="512" cy="408" rx="40" ry="67"/>
+      <ellipse cx="609" cy="505" rx="67" ry="40"/>
+      <ellipse cx="512" cy="602" rx="40" ry="67"/>
+      <ellipse cx="415" cy="505" rx="67" ry="40"/>
+    </g>
+  </g>
+</svg>
