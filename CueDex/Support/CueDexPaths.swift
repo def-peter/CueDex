@@ -9,6 +9,10 @@ struct CueDexPaths: Sendable {
         applicationSupport.appending(path: "Events", directoryHint: .isDirectory)
     }
 
+    var diagnosticsDirectory: URL {
+        applicationSupport.appending(path: "Diagnostics", directoryHint: .isDirectory)
+    }
+
     var customSoundsDirectory: URL {
         applicationSupport.appending(path: "Sounds", directoryHint: .isDirectory)
     }

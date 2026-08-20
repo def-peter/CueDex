@@ -517,18 +517,58 @@ struct CueDexTests {
             ).filter { $0.lastPathComponent.hasPrefix("turn-complete.") }
         }
 
+        func diagnosticDecisions() throws -> [String] {
+            try fileManager.contentsOfDirectory(
+                at: installer.paths.diagnosticsDirectory,
+                includingPropertiesForKeys: nil
+            )
+            .filter { $0.lastPathComponent.hasPrefix("hook-") }
+            .compactMap { url in
+                guard let object = try? JSONSerialization.jsonObject(with: Data(contentsOf: url)),
+                      let record = object as? [String: Any] else { return nil }
+                return record["decision"] as? String
+            }
+        }
+
+        func diagnosticFiles() throws -> [URL] {
+            try fileManager.contentsOfDirectory(
+                at: installer.paths.diagnosticsDirectory,
+                includingPropertiesForKeys: nil
+            )
+            .filter { $0.lastPathComponent.hasPrefix("hook-") }
+        }
+
         #expect(try runHelper(with: #"{"hook_event_name":"SubagentStop","agent_id":"child"}"#) == 0)
         #expect(try completionEvents().isEmpty)
 
         #expect(try runHelper(with: #"{"hook_event_name":"Stop","turn_id":"main"}"#) == 0)
         #expect(try completionEvents().isEmpty)
 
-        let completedTurn = #"{"hook_event_name":"Stop","turn_id":"main","last_assistant_message":"Done"}"#
+        let ephemeralTurn = #"{"hook_event_name":"Stop","session_id":"ambient","turn_id":"ambient-turn","transcript_path":null,"last_assistant_message":"Suggested next step"}"#
+        #expect(try runHelper(with: ephemeralTurn) == 0)
+        #expect(try completionEvents().isEmpty)
+
+        let completedTurn = #"{"hook_event_name":"Stop","session_id":"main","turn_id":"main","transcript_path":"/tmp/main.jsonl","last_assistant_message":"Done"}"#
         #expect(try runHelper(with: completedTurn) == 0)
         #expect(try completionEvents().count == 1)
 
         #expect(try runHelper(with: completedTurn) == 0)
         #expect(try completionEvents().count == 1)
+
+        let decisions = try diagnosticDecisions()
+        #expect(decisions.count == 5)
+        #expect(decisions.contains("ignored_non_stop"))
+        #expect(decisions.contains("ignored_missing_message"))
+        #expect(decisions.contains("ignored_ephemeral_session"))
+        #expect(decisions.contains("ignored_duplicate_turn"))
+        #expect(decisions.contains("notified"))
+
+        for diagnosticFile in try diagnosticFiles() {
+            let attributes = try fileManager.attributesOfItem(atPath: diagnosticFile.path)
+            let permissions = attributes[.posixPermissions] as? NSNumber
+            #expect(permissions?.intValue == 0o600)
+            #expect(!String(decoding: try Data(contentsOf: diagnosticFile), as: UTF8.self).contains("Suggested next step"))
+        }
     }
 
     @Test @MainActor func startingDebugAppDoesNotRewriteAnInstalledHelper() throws {

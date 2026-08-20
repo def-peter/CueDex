@@ -262,32 +262,112 @@ final class CodexIntegrationInstaller {
     private func writeHelper() throws {
         try fileManager.createDirectory(at: paths.helperDirectory, withIntermediateDirectories: true)
         try fileManager.createDirectory(at: paths.eventsDirectory, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: paths.diagnosticsDirectory, withIntermediateDirectories: true)
 
         let eventDirectory = Self.shellQuoted(paths.eventsDirectory.path(percentEncoded: false))
+        let diagnosticsDirectory = Self.shellQuoted(paths.diagnosticsDirectory.path(percentEncoded: false))
         let appBundle = Self.shellQuoted(paths.appBundle.path(percentEncoded: false))
         let script = """
         #!/bin/sh
         set -eu
         PAYLOAD=$(/bin/cat)
-        HOOK_EVENT=$(printf '%s' "$PAYLOAD" | /usr/bin/plutil -extract hook_event_name raw -o - - 2>/dev/null || true)
-        [ "$HOOK_EVENT" = "Stop" ] || exit 0
-        LAST_ASSISTANT_MESSAGE=$(printf '%s' "$PAYLOAD" | /usr/bin/plutil -extract last_assistant_message raw -o - - 2>/dev/null || true)
-        [ -n "$LAST_ASSISTANT_MESSAGE" ] || exit 0
-        [ "$LAST_ASSISTANT_MESSAGE" != "null" ] || exit 0
-        MESSAGE_TEXT=$(printf '%s' "$LAST_ASSISTANT_MESSAGE" | /usr/bin/tr -d '[:space:]')
-        [ -n "$MESSAGE_TEXT" ] || exit 0
-        TURN_ID=$(printf '%s' "$PAYLOAD" | /usr/bin/plutil -extract turn_id raw -o - - 2>/dev/null || true)
         EVENT_DIR=\(eventDirectory)
+        DIAGNOSTICS_DIR=\(diagnosticsDirectory)
         /bin/mkdir -p "$EVENT_DIR"
+        /bin/mkdir -p "$DIAGNOSTICS_DIR"
+
+        extract_field() {
+            printf '%s' "$PAYLOAD" | /usr/bin/plutil -extract "$1" raw -o - - 2>/dev/null || true
+        }
+
+        add_string_field() {
+            [ -n "$2" ] || return 0
+            [ "$2" != "null" ] || return 0
+            /usr/bin/plutil -insert "$1" -string "$2" "$DIAGNOSTIC_PLIST" >/dev/null
+        }
+
+        write_diagnostic() {
+            TIMESTAMP=$(/bin/date -u '+%Y-%m-%dT%H:%M:%SZ')
+            FILE_TIMESTAMP=$(/bin/date -u '+%Y%m%dT%H%M%SZ')
+            DIAGNOSTIC_PLIST="$DIAGNOSTICS_DIR/.hook-$FILE_TIMESTAMP-$$.plist"
+            DIAGNOSTIC_TEMP="$DIAGNOSTICS_DIR/.hook-$FILE_TIMESTAMP-$$.json"
+            DIAGNOSTIC_FILE="$DIAGNOSTICS_DIR/hook-$FILE_TIMESTAMP-$$.json"
+            /usr/bin/plutil -create xml1 "$DIAGNOSTIC_PLIST"
+            /bin/chmod 600 "$DIAGNOSTIC_PLIST"
+            /usr/bin/plutil -insert timestamp -string "$TIMESTAMP" "$DIAGNOSTIC_PLIST" >/dev/null
+            /usr/bin/plutil -insert helper_pid -integer "$$" "$DIAGNOSTIC_PLIST" >/dev/null
+            /usr/bin/plutil -insert parent_pid -integer "$PPID" "$DIAGNOSTIC_PLIST" >/dev/null
+            /usr/bin/plutil -insert decision -string "$DECISION" "$DIAGNOSTIC_PLIST" >/dev/null
+            /usr/bin/plutil -insert payload_bytes -integer "$PAYLOAD_BYTES" "$DIAGNOSTIC_PLIST" >/dev/null
+            /usr/bin/plutil -insert assistant_message_bytes -integer "$MESSAGE_BYTES" "$DIAGNOSTIC_PLIST" >/dev/null
+            add_string_field hook_event_name "$HOOK_EVENT"
+            add_string_field turn_id "$TURN_ID"
+            add_string_field session_id "$SESSION_ID"
+            add_string_field cwd "$HOOK_CWD"
+            add_string_field transcript_path "$TRANSCRIPT_PATH"
+            add_string_field model "$MODEL"
+            add_string_field permission_mode "$PERMISSION_MODE"
+            add_string_field stop_hook_active "$STOP_HOOK_ACTIVE"
+            add_string_field assistant_message_sha256 "$MESSAGE_SHA256"
+            /usr/bin/plutil -convert json -o "$DIAGNOSTIC_TEMP" "$DIAGNOSTIC_PLIST"
+            /bin/chmod 600 "$DIAGNOSTIC_TEMP"
+            /bin/mv -f "$DIAGNOSTIC_TEMP" "$DIAGNOSTIC_FILE"
+            /bin/rm -f "$DIAGNOSTIC_PLIST"
+            /usr/bin/find "$DIAGNOSTICS_DIR" -type f -name 'hook-*.json' -mtime +7 -delete 2>/dev/null || true
+        }
+
+        HOOK_EVENT=$(extract_field hook_event_name)
+        TURN_ID=$(extract_field turn_id)
+        SESSION_ID=$(extract_field session_id)
+        HOOK_CWD=$(extract_field cwd)
+        TRANSCRIPT_PATH=$(extract_field transcript_path)
+        MODEL=$(extract_field model)
+        PERMISSION_MODE=$(extract_field permission_mode)
+        STOP_HOOK_ACTIVE=$(extract_field stop_hook_active)
+        LAST_ASSISTANT_MESSAGE=$(extract_field last_assistant_message)
+        PAYLOAD_BYTES=$(printf '%s' "$PAYLOAD" | /usr/bin/wc -c | /usr/bin/tr -d '[:space:]')
+        MESSAGE_BYTES=$(printf '%s' "$LAST_ASSISTANT_MESSAGE" | /usr/bin/wc -c | /usr/bin/tr -d '[:space:]')
+        MESSAGE_SHA256=""
+        if [ -n "$LAST_ASSISTANT_MESSAGE" ] && [ "$LAST_ASSISTANT_MESSAGE" != "null" ]; then
+            MESSAGE_SHA256=$(printf '%s' "$LAST_ASSISTANT_MESSAGE" | /usr/bin/shasum -a 256 | /usr/bin/awk '{print $1}')
+        fi
+
+        if [ "$HOOK_EVENT" != "Stop" ]; then
+            DECISION="ignored_non_stop"
+            write_diagnostic || true
+            exit 0
+        fi
+        if [ -z "$LAST_ASSISTANT_MESSAGE" ] || [ "$LAST_ASSISTANT_MESSAGE" = "null" ]; then
+            DECISION="ignored_missing_message"
+            write_diagnostic || true
+            exit 0
+        fi
+        MESSAGE_TEXT=$(printf '%s' "$LAST_ASSISTANT_MESSAGE" | /usr/bin/tr -d '[:space:]')
+        if [ -z "$MESSAGE_TEXT" ]; then
+            DECISION="ignored_blank_message"
+            write_diagnostic || true
+            exit 0
+        fi
+        if [ -z "$TRANSCRIPT_PATH" ] || [ "$TRANSCRIPT_PATH" = "null" ]; then
+            DECISION="ignored_ephemeral_session"
+            write_diagnostic || true
+            exit 0
+        fi
         if [ -n "$TURN_ID" ] && [ "$TURN_ID" != "null" ]; then
             LAST_TURN_FILE="$EVENT_DIR/.last-turn-id"
             PREVIOUS_TURN=$(/bin/cat "$LAST_TURN_FILE" 2>/dev/null || true)
-            [ "$PREVIOUS_TURN" != "$TURN_ID" ] || exit 0
+            if [ "$PREVIOUS_TURN" = "$TURN_ID" ]; then
+                DECISION="ignored_duplicate_turn"
+                write_diagnostic || true
+                exit 0
+            fi
             TEMP_LAST_TURN="$LAST_TURN_FILE.$$"
             printf '%s' "$TURN_ID" > "$TEMP_LAST_TURN"
             /bin/mv -f "$TEMP_LAST_TURN" "$LAST_TURN_FILE"
         fi
         /usr/bin/touch "$EVENT_DIR/turn-complete.$$"
+        DECISION="notified"
+        write_diagnostic || true
         /usr/bin/open -gj \(appBundle) >/dev/null 2>&1 || true
         exit 0
         """
