@@ -86,12 +86,45 @@
         }
       }
     },
+    "Check Your Messages (Female)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check Your Messages (Female)"
+          }
+        }
+      }
+    },
+    "Check Your Messages (Male)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check Your Messages (Male)"
+          }
+        }
+      }
+    },
     "Checking for Updates..." : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "正在检查更新..."
+          }
+        }
+      }
+    },
+    "Chinese" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "中文"
           }
         }
       }
@@ -142,6 +175,7 @@
       }
     },
     "Cue" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -153,16 +187,6 @@
     },
     "CueDex" : {
 
-    },
-    "CueDex notifies you with screen-edge glow, sound, or speech when Codex finishes responding." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "当 Codex 完成回复时，CueDex 会通过屏幕边缘光效、提示音或语音及时提醒你。"
-          }
-        }
-      }
     },
     "CueDex %@ is available. You are using %@." : {
       "localizations" : {
@@ -185,6 +209,16 @@
         }
       }
     },
+    "CueDex notifies you with screen-edge glow, sound, or speech when Codex finishes responding." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当 Codex 完成回复时，CueDex 会通过屏幕边缘光效、提示音或语音及时提醒你。"
+          }
+        }
+      }
+    },
     "CueDex will back up config.toml before replacing the current Codex notifier." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -195,6 +229,9 @@
           }
         }
       }
+    },
+    "Custom" : {
+
     },
     "Disable Integration" : {
       "localizations" : {
@@ -246,6 +283,17 @@
         }
       }
     },
+    "English" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "英文"
+          }
+        }
+      }
+    },
     "Existing notifier found" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -257,22 +305,22 @@
         }
       }
     },
-    "From" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "开始"
-          }
-        }
-      }
-    },
     "Feedback Email" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "反馈邮箱"
+          }
+        }
+      }
+    },
+    "From" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开始"
           }
         }
       }
@@ -357,7 +405,8 @@
         }
       }
     },
-    "Message Reminder (Female Voice)" : {
+    "Message Reminder (Female)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -367,12 +416,23 @@
         }
       }
     },
-    "Message Reminder (Male Voice)" : {
+    "Message Reminder (Male)" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "快看我消息（男）"
+          }
+        }
+      }
+    },
+    "Mode" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "模式"
           }
         }
       }
@@ -420,6 +480,26 @@
         }
       }
     },
+    "Notification Sound" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "通知音"
+          }
+        }
+      }
+    },
+    "Open Settings > Hooks in Codex to review and trust CueDex. If CueDex does not appear, restart ChatGPT and try again." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请前往 Codex 的“设置 > 钩子”审核并信任 CueDex；如果未显示 CueDex，请重启 ChatGPT 后重试。"
+          }
+        }
+      }
+    },
     "Pause notifications" : {
       "localizations" : {
         "zh-Hans" : {
@@ -436,6 +516,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "暂停通知"
+          }
+        }
+      }
+    },
+    "Play notification sound" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "播放通知音"
+          }
+        }
+      }
+    },
+    "Pre-recorded" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预录语音"
           }
         }
       }
@@ -470,6 +571,26 @@
         }
       }
     },
+    "Recording" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "录音"
+          }
+        }
+      }
+    },
+    "Remove Custom Sound" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "移除自定义音频"
+          }
+        }
+      }
+    },
     "Replace" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -488,16 +609,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "替换现有通知程序？"
-          }
-        }
-      }
-    },
-    "Remove Custom Sound" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "移除自定义音频"
           }
         }
       }
@@ -564,6 +675,7 @@
       }
     },
     "Speak notification" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -589,6 +701,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "系统默认"
+          }
+        }
+      }
+    },
+    "System Speech" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "系统朗读"
           }
         }
       }
@@ -665,6 +788,16 @@
         }
       }
     },
+    "Unable to import audio file." : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法导入音频文件。"
+          }
+        }
+      }
+    },
     "Unavailable" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -672,16 +805,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "不可用"
-          }
-        }
-      }
-    },
-    "Unable to import audio file." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "无法导入音频文件。"
           }
         }
       }
@@ -712,16 +835,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "更新"
-          }
-        }
-      }
-    },
-    "Open Settings > Hooks in Codex to review and trust CueDex. If CueDex does not appear, restart ChatGPT and try again." : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "请前往 Codex 的“设置 > 钩子”审核并信任 CueDex；如果未显示 CueDex，请重启 ChatGPT 后重试。"
           }
         }
       }
@@ -763,6 +876,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "说话人"
+          }
+        }
+      }
+    },
+    "Voice notification" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "语音提醒"
           }
         }
       }

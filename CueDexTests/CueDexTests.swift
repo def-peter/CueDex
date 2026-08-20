@@ -64,6 +64,9 @@ struct CueDexTests {
         #expect(!preferences.speechEnabled)
         #expect(preferences.appLanguage == .simplifiedChinese)
         #expect(preferences.speechText == "Codex 已回复完成。")
+        #expect(preferences.speechMode == .system)
+        #expect(preferences.prerecordedSpeech == .messageReminderMale)
+        #expect(preferences.speechVolume == 0.8)
         #expect(preferences.glowEnabled)
         #expect(preferences.glowAnimation == .breathing)
         #expect(preferences.glowFlashPrimaryRed == 1.0)
@@ -186,28 +189,77 @@ struct CueDexTests {
                 == "无法导入音频文件。"
         )
         #expect(
-            localizationBundle.localizedString(forKey: "Message Reminder (Male Voice)", value: nil, table: nil)
+            localizationBundle.localizedString(forKey: "Message Reminder (Male)", value: nil, table: nil)
                 == "快看我消息（男）"
         )
         #expect(
-            localizationBundle.localizedString(forKey: "Message Reminder (Female Voice)", value: nil, table: nil)
+            localizationBundle.localizedString(forKey: "Message Reminder (Female)", value: nil, table: nil)
                 == "快看我消息（女）"
         )
+        #expect(
+            localizationBundle.localizedString(forKey: "Check Your Messages (Male)", value: nil, table: nil)
+                == "Check Your Messages (Male)"
+        )
+        #expect(
+            localizationBundle.localizedString(forKey: "Check Your Messages (Female)", value: nil, table: nil)
+                == "Check Your Messages (Female)"
+        )
+        #expect(localizationBundle.localizedString(forKey: "Notification Sound", value: nil, table: nil) == "通知音")
+        #expect(localizationBundle.localizedString(forKey: "Pre-recorded", value: nil, table: nil) == "预录语音")
+        #expect(localizationBundle.localizedString(forKey: "System Speech", value: nil, table: nil) == "系统朗读")
+        #expect(localizationBundle.localizedString(forKey: "Chinese", value: nil, table: nil) == "中文")
+        #expect(localizationBundle.localizedString(forKey: "English", value: nil, table: nil) == "英文")
     }
 
-    @Test @MainActor func bundledNotificationSoundsArePackaged() throws {
+    @Test @MainActor func prerecordedSpeechIsGroupedAndPackaged() throws {
         #expect(
-            Set(SoundController.bundledSounds.map(\.id)) == [
+            Set(PrerecordedSpeech.allCases.map(\.rawValue)) == [
                 "bundled.message-reminder-male",
                 "bundled.message-reminder-female",
+                "bundled.check-your-messages-male",
+                "bundled.check-your-messages-female",
             ]
         )
+        #expect(PrerecordedSpeech.options(for: .chinese).count == 2)
+        #expect(PrerecordedSpeech.options(for: .english).count == 2)
 
-        for option in SoundController.bundledSounds {
-            let url = try #require(SoundController.bundledSoundURL(for: option.id))
+        for recording in PrerecordedSpeech.allCases {
+            let url = try #require(SpeechController.prerecordedSpeechURL(for: recording))
             #expect(url.pathExtension == "wav")
             #expect(try Data(contentsOf: url).count > 32_000)
         }
+    }
+
+    @Test @MainActor func legacyBundledSoundMigratesToPrerecordedSpeech() throws {
+        let data = try #require(
+            #"{"soundEnabled":true,"soundIdentifier":"bundled.text-me-back-soon-female","soundVolume":0.35,"speechEnabled":false}"#
+                .data(using: .utf8)
+        )
+
+        let preferences = try JSONDecoder().decode(CuePreferences.self, from: data)
+
+        #expect(!preferences.soundEnabled)
+        #expect(preferences.soundIdentifier == "Glass")
+        #expect(preferences.speechEnabled)
+        #expect(preferences.speechMode == .prerecorded)
+        #expect(preferences.prerecordedSpeech == .checkYourMessagesFemale)
+        #expect(preferences.speechVolume == 0.35)
+    }
+
+    @Test @MainActor func disabledLegacyRecordingDoesNotDisableActiveSystemSpeech() throws {
+        let data = try #require(
+            #"{"soundEnabled":false,"soundIdentifier":"bundled.message-reminder-male","speechEnabled":true,"speechText":"Still active"}"#
+                .data(using: .utf8)
+        )
+
+        let preferences = try JSONDecoder().decode(CuePreferences.self, from: data)
+
+        #expect(!preferences.soundEnabled)
+        #expect(preferences.soundIdentifier == "Glass")
+        #expect(preferences.speechEnabled)
+        #expect(preferences.speechMode == .system)
+        #expect(preferences.speechText == "Still active")
+        #expect(preferences.prerecordedSpeech == .messageReminderMale)
     }
 
     @Test @MainActor func missingCustomSoundDoesNotRemainSelected() throws {
@@ -318,10 +370,11 @@ struct CueDexTests {
     @Test @MainActor func speechUtterancePreservesNotificationText() {
         let text = "Finished; touch /tmp/should-not-exist"
 
-        let utterance = SpeechController.makeUtterance(text: text)
+        let utterance = SpeechController.makeUtterance(text: text, volume: 0.42)
 
         #expect(utterance.speechString == text)
         #expect(utterance.voice == nil)
+        #expect(abs(utterance.volume - 0.42) < 0.001)
     }
 
     @Test @MainActor func speechUtteranceUsesSelectedSystemVoice() throws {
@@ -341,11 +394,17 @@ struct CueDexTests {
 
         let store = PreferencesStore(defaults: defaults)
         store.speechEnabled = true
+        store.speechMode = .prerecorded
+        store.prerecordedSpeech = .checkYourMessagesMale
+        store.speechVolume = 0.45
         store.speechText = "The response is ready."
         store.speechVoiceIdentifier = "com.apple.voice.compact.en-US.Samantha"
 
         let restored = PreferencesStore(defaults: defaults)
         #expect(restored.speechEnabled)
+        #expect(restored.speechMode == .prerecorded)
+        #expect(restored.prerecordedSpeech == .checkYourMessagesMale)
+        #expect(restored.speechVolume == 0.45)
         #expect(restored.speechText == "The response is ready.")
         #expect(restored.speechVoiceIdentifier == "com.apple.voice.compact.en-US.Samantha")
     }

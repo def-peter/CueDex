@@ -54,6 +54,9 @@ struct CuePreferences: Codable, Equatable {
     var soundVolume = 0.7
     var customSoundPath: String?
     var customSoundName: String?
+    var speechMode = SpeechMode.system
+    var prerecordedSpeech = PrerecordedSpeech.messageReminderMale
+    var speechVolume = 0.8
     var speechVoiceIdentifier: String?
     var speechText = AppLanguage.simplifiedChinese.defaultSpeechText
     var quietHoursEnabled = false
@@ -72,8 +75,10 @@ struct CuePreferences: Codable, Equatable {
         appLanguage = storedLanguage ?? defaults.appLanguage
         isPaused = try container.decodeIfPresent(Bool.self, forKey: .isPaused) ?? defaults.isPaused
         glowEnabled = try container.decodeIfPresent(Bool.self, forKey: .glowEnabled) ?? defaults.glowEnabled
-        soundEnabled = try container.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? defaults.soundEnabled
-        speechEnabled = try container.decodeIfPresent(Bool.self, forKey: .speechEnabled) ?? defaults.speechEnabled
+        let storedSoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? defaults.soundEnabled
+        let storedSpeechEnabled = try container.decodeIfPresent(Bool.self, forKey: .speechEnabled) ?? defaults.speechEnabled
+        soundEnabled = storedSoundEnabled
+        speechEnabled = storedSpeechEnabled
         let storedGlowRed = try container.decodeIfPresent(Double.self, forKey: .glowRed)
         let storedGlowGreen = try container.decodeIfPresent(Double.self, forKey: .glowGreen)
         let storedGlowBlue = try container.decodeIfPresent(Double.self, forKey: .glowBlue)
@@ -100,6 +105,30 @@ struct CuePreferences: Codable, Equatable {
         customSoundPath = try container.decodeIfPresent(String.self, forKey: .customSoundPath)
         customSoundName = try container.decodeIfPresent(String.self, forKey: .customSoundName)
             ?? customSoundPath.map { URL(filePath: $0).deletingPathExtension().lastPathComponent }
+        let storedSpeechMode = try container.decodeIfPresent(String.self, forKey: .speechMode)
+            .flatMap(SpeechMode.init(rawValue:))
+        speechMode = storedSpeechMode ?? defaults.speechMode
+        let storedPrerecordedSpeech = try container.decodeIfPresent(String.self, forKey: .prerecordedSpeech)
+            .flatMap(PrerecordedSpeech.storedValue)
+        prerecordedSpeech = storedPrerecordedSpeech ?? defaults.prerecordedSpeech
+        speechVolume = try container.decodeIfPresent(Double.self, forKey: .speechVolume) ?? defaults.speechVolume
+
+        if storedSpeechMode == nil,
+           let legacyRecording = PrerecordedSpeech.storedValue(soundIdentifier) {
+            prerecordedSpeech = legacyRecording
+            soundIdentifier = defaults.soundIdentifier
+            soundEnabled = false
+
+            if storedSpeechEnabled && !storedSoundEnabled {
+                speechMode = .system
+                speechEnabled = true
+            } else {
+                speechMode = .prerecorded
+                speechVolume = soundVolume
+                speechEnabled = storedSoundEnabled
+            }
+        }
+
         speechVoiceIdentifier = try container.decodeIfPresent(String.self, forKey: .speechVoiceIdentifier)
         let storedSpeechText = try container.decodeIfPresent(String.self, forKey: .speechText)
         if storedLanguage == nil, storedSpeechText == AppLanguage.english.defaultSpeechText {

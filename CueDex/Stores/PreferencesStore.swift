@@ -64,6 +64,21 @@ final class PreferencesStore {
         set { preferences.speechEnabled = newValue }
     }
 
+    var speechMode: SpeechMode {
+        get { preferences.speechMode }
+        set { preferences.speechMode = newValue }
+    }
+
+    var prerecordedSpeech: PrerecordedSpeech {
+        get { preferences.prerecordedSpeech }
+        set { preferences.prerecordedSpeech = newValue }
+    }
+
+    var speechVolume: Double {
+        get { preferences.speechVolume }
+        set { preferences.speechVolume = min(max(newValue, 0), 1) }
+    }
+
     var breathingGlowColor: Color {
         get {
             Color(

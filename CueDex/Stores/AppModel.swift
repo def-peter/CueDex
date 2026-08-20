@@ -100,10 +100,7 @@ final class AppModel {
 
     func testSpeech() {
         guard preferences.speechEnabled else { return }
-        speechController.speak(
-            preferences.speechText,
-            voiceIdentifier: preferences.speechVoiceIdentifier
-        )
+        speechController.play(preferences: preferences.preferences)
     }
 
     private func deliverCue() {
@@ -114,10 +111,7 @@ final class AppModel {
             soundController.play(preferences: preferences.preferences)
         }
         if preferences.speechEnabled {
-            speechController.speak(
-                preferences.speechText,
-                voiceIdentifier: preferences.speechVoiceIdentifier
-            )
+            speechController.play(preferences: preferences.preferences)
         }
         logger.info("Delivered completion cue")
     }
