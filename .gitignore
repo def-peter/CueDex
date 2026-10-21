@@ -9,6 +9,7 @@ xcuserdata/
 # Generated media and scratch files
 /output/
 /tmp/
+/local-tests/cuedex-wechat-cover/
 /design/logo-exploration/
 /design/logo-final-v1/AppIcon.appiconset/
 /design/logo-final-v1/MenuBarIcon.imageset/
