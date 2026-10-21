@@ -4,10 +4,10 @@
 
 <h1 align="center">CueDex</h1>
 
-<p align="center"><strong>即使视线不在 Codex，也能第一时间知道回复已经完成。</strong></p>
+<p align="center"><strong>即使视线不在编码助手，也能第一时间知道回复已经完成。</strong></p>
 
 <p align="center">
-  一款轻量的原生 macOS 工具，在主 Agent 完成回复时<br>
+  一款轻量的原生 macOS 工具，在 Codex 或 OpenCode 主会话完成回复时<br>
   通过屏幕边缘光效、提示音或语音提醒你。
 </p>
 
@@ -24,7 +24,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/def-peter/CueDex?style=flat-square" alt="MIT 许可证"></a>
 </p>
 
-当 Codex 任务耗时较长，你可以放心切换窗口或暂时离开。CueDex 在本机监听完成事件，不保存、不上传对话内容，就能及时给出醒目或有声的提醒。
+当编码任务耗时较长，你可以放心切换窗口或暂时离开。CueDex 在本机监听完成事件，不保存、不上传对话内容，就能及时给出醒目或有声的提醒。
 
 ## ✨ 实际效果
 
@@ -41,13 +41,14 @@
   </tr>
 </table>
 
-以上录屏来自 CueDex 在真实 macOS Codex 工作区中的运行效果。颜色、强度和持续时间均可自定义。
+以上录屏来自 CueDex 在真实 macOS Codex 工作区中的运行效果。颜色和动画可自定义；当前光效固定为 100% 强度、持续 3 秒。
 
 ## 🔔 功能
 
 - 🎯 通过 Codex `Stop` 生命周期钩子监听主 Agent 完成事件，不会因子 Agent 完成而误报
+- 🔌 可选的 OpenCode V2.1.1 全局插件，Codex / OpenCode 独立保存提醒配置；真实会话验收尚待完成
 - 🌈 使用 GPU 渲染单色呼吸光或双色警灯式边缘闪烁，覆盖所有已连接显示器
-- 🎛️ 支持自定义颜色、强度、持续时间、macOS 提示音、本地音频和音量
+- 🎛️ 按来源设置颜色、动画、macOS 提示音和本地音频；提示音与语音均跟随系统音量
 - 🗣️ 通过 Apple 原生 `AVSpeechSynthesizer` 播放自定义文字，并可选择系统说话人
 - 🌙 支持暂停提醒、免打扰、登录时启动和一键预览
 - 🌐 支持运行时切换简体中文和英文，默认使用中文
@@ -60,7 +61,7 @@
 
 1. 从[最新 GitHub Release](https://github.com/def-peter/CueDex/releases/latest) 下载对应的 DMG：Apple 芯片（M1 或更新）选择 `arm64`，Intel 芯片选择 `x86_64`。
 2. 打开 DMG，将 `CueDex.app` 移入 `/Applications`。
-3. 启动 CueDex，然后按照下一节完成 Codex 集成。
+3. 启动 CueDex，按下方步骤启用所需集成；应用不会自动启用接入。
 
 > [!IMPORTANT]
 > CueDex 使用 ad-hoc 签名，但目前没有付费的 Apple Developer ID 证书，因此尚未经过
@@ -72,16 +73,29 @@
 
 ## 🔌 连接 Codex
 
-1. 打开 CueDex，选择**通用 > 启用集成**。
+1. 打开 CueDex，选择**通用 > Codex > 启用集成**。
 2. CueDex 会向 `~/.codex/hooks.json` 添加自己的 `Stop` 处理器，不会覆盖其他钩子或已有的 `notify` 命令。
 3. 打开 **Codex 设置 > Hooks**，检查并信任 CueDex 钩子。
 4. 如果没有看到该钩子，请重启 ChatGPT 后再次检查。
 
 信任后，CueDex 会常驻菜单栏，并且只在主 Agent 产生新的回复并完成时提醒。
 
+如果其他 Codex `Stop` 钩子阻止完成并要求继续执行，CueDex 无法保证等到该次继续执行结束后才提醒。
+
+## 🔌 连接 OpenCode
+
+1. 使用本机 **OpenCode V2.1.1**；此接入暂不支持其他版本、远程服务器、SSH 或容器。
+2. 在 CueDex 中选择**通用 > OpenCode > 启用集成**，确认安装 CueDex 全局插件。无需手改 JSON、配置 MCP 或提供 API Key。
+3. 安装后重新加载 OpenCode；如果插件未加载，可能需要重启其后台服务。请先等正在执行的工作结束；CueDex 不会替你重启。
+4. 在主会话中发起一次新请求，正常完成后检查 CueDex 的「最近收到完成事件」。
+
+插件只针对主会话回复成功完成，不提醒子会话、失败、取消或等待授权/输入。插件加载时已在执行的请求会保守跳过。未启用接入也能编辑配置和预览效果；预览按钮不代表连接正常。
+
+**验证边界：** 自动化测试已通过，但真实插件加载、运行中服务兼容性和会话端到端投递尚未完成验收。详见[设计与验证记录](docs/design/opencode-support.md)。
+
 ## ⚙️ 工作原理
 
-Codex 在主 Agent 触发 `Stop` 事件时调用一个轻量的本地辅助程序。辅助程序会确认本轮包含新的 AI 回复，对重复的 `turn_id` 去重，在 `~/Library/Application Support/CueDex` 中写入空事件标记，并唤醒 CueDex。文件系统事件源会直接消费新标记，不需要轮询。
+Codex 在主 Agent 触发 `Stop` 事件时调用轻量的本地辅助程序；OpenCode 通过全局 V2 插件观察执行与主要回复步骤的生命周期。两者只在 `~/Library/Application Support/CueDex` 中写入事件元数据并唤醒应用，文件系统事件源直接消费新事件，无需轮询。CueDex 对投递去重、使用对应来源的配置，并排队播放而不中断当前提醒。超过 60 秒的事件会被丢弃；暂停或免打扰会清空待播提醒，恢复后不补播。
 
 提示词和回复内容不会被保存或发送到任何地方。CueDex 只会为了低频更新检查访问 GitHub Releases API。
 

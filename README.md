@@ -4,11 +4,11 @@
 
 <h1 align="center">CueDex</h1>
 
-<p align="center"><strong>Know when Codex is done, even when you are looking elsewhere.</strong></p>
+<p align="center"><strong>Know when your coding assistant is done, even when you are looking elsewhere.</strong></p>
 
 <p align="center">
   A lightweight native macOS utility that uses screen-edge glow, sound, or speech<br>
-  when the main Codex agent finishes responding.
+  when the main Codex or OpenCode session finishes responding.
 </p>
 
 <p align="center">
@@ -24,7 +24,7 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/def-peter/CueDex?style=flat-square" alt="MIT license"></a>
 </p>
 
-CueDex is useful when a Codex task takes long enough for you to switch to another window or step away. It listens for the completion event locally and gives you a visible or audible cue without persisting or sending the conversation.
+CueDex is useful when a coding task takes long enough for you to switch to another window or step away. It listens for completion events locally and gives you a visible or audible cue without persisting or sending the conversation.
 
 ## ✨ See It in Action
 
@@ -41,13 +41,14 @@ CueDex is useful when a Codex task takes long enough for you to switch to anothe
   </tr>
 </table>
 
-The recordings show CueDex running around a real macOS Codex workspace. Colors, intensity, and duration are configurable.
+The recordings show CueDex running around a real macOS Codex workspace. Colors and animation are configurable; glow now uses fixed 100% intensity and a 3-second duration.
 
 ## 🔔 Features
 
 - 🎯 Main-agent completion events through the Codex `Stop` lifecycle hook; subagent completions are ignored
+- 🔌 Optional OpenCode V2.1.1 global plugin, with independent Codex/OpenCode cue profiles; real-session acceptance testing is still pending
 - 🌈 GPU-driven monochrome breathing glow or two-color emergency-style edge flash across every connected display
-- 🎛️ Custom colors, intensity, duration, macOS sounds, imported audio, and volume
+- 🎛️ Per-source colors, animations, macOS sounds, and imported audio; sound and speech follow system volume
 - 🗣️ Custom spoken messages and system voices through Apple's native `AVSpeechSynthesizer`
 - 🌙 Pause, quiet hours, launch at login, and one-click cue previews
 - 🌐 Runtime Simplified Chinese and English switching, with Chinese as the default
@@ -60,7 +61,7 @@ The recordings show CueDex running around a real macOS Codex workspace. Colors, 
 
 1. Download the correct DMG from the [latest GitHub Release](https://github.com/def-peter/CueDex/releases/latest): `arm64` for Apple silicon (M1 or later), or `x86_64` for Intel.
 2. Open the DMG and move `CueDex.app` to `/Applications`.
-3. Launch CueDex and complete the Codex integration steps below.
+3. Launch CueDex and enable the desired integration below. Integrations are not enabled automatically.
 
 > [!IMPORTANT]
 > CueDex is ad-hoc signed but is not notarized because it does not currently use
@@ -73,16 +74,29 @@ Every Release includes a SHA-256 file for verifying download integrity.
 
 ## 🔌 Connect to Codex
 
-1. Open CueDex and select **General > Enable Integration**.
+1. Open CueDex and select **General > Codex > Enable Integration**.
 2. CueDex adds its `Stop` handler to `~/.codex/hooks.json` without replacing other hooks or an existing `notify` command.
 3. Open **Codex Settings > Hooks** and review and trust the CueDex hook.
 4. If the hook does not appear, restart ChatGPT and check again.
 
 Once trusted, CueDex stays in the menu bar and responds only when the main agent finishes with a new assistant message.
 
+If another Codex `Stop` hook blocks completion and asks the agent to continue, CueDex cannot guarantee that its cue waits for that continuation.
+
+## 🔌 Connect to OpenCode
+
+1. Use local **OpenCode V2.1.1**. Other versions, remote servers, SSH, and containers are not supported by this integration.
+2. In CueDex, select **General > OpenCode > Enable Integration** and confirm installation of CueDex's global plugin. No manual JSON edits, MCP setup, or API keys are required.
+3. Reload OpenCode after installation; if the plugin does not load, its background service may need restarting. Finish active work before doing so. CueDex does not restart it for you.
+4. Start a new request in a main session, let it finish successfully, and check **Last completion received** in CueDex.
+
+The plugin targets successful main-session responses, not child sessions, failures, cancellations, or permission/input waits. A request already running when the plugin loads is deliberately skipped. Cue settings remain editable when integration is disabled, and preview buttons do not verify connectivity.
+
+**Validation boundary:** automated tests pass, but real plugin loading, service compatibility, and end-to-end session delivery have not yet been accepted. See [the design and verification record](docs/design/opencode-support.md).
+
 ## ⚙️ How It Works
 
-Codex invokes a small local helper for the main agent's `Stop` event. The helper validates that the turn contains a new assistant message, deduplicates repeated `turn_id` values, writes an empty event marker under `~/Library/Application Support/CueDex`, and wakes the app. A dispatch file-system source consumes fresh markers without polling.
+Codex invokes a small local helper for the main agent's `Stop` event. OpenCode uses a global V2 plugin to observe execution and primary-step lifecycle events. Both write metadata-only local event files under `~/Library/Application Support/CueDex` and wake the app. A dispatch file-system source consumes fresh events without polling. CueDex deduplicates delivery, routes it to the matching source profile, and queues cues without interrupting playback. Events older than 60 seconds are discarded; pause and quiet hours clear pending cues without replaying them later.
 
 Prompt and response content are never persisted or sent anywhere. CueDex only contacts the GitHub Releases API for its low-frequency update check.
 

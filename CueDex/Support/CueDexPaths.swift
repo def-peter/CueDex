@@ -4,6 +4,15 @@ struct CueDexPaths: Sendable {
     let applicationSupport: URL
     let codexHome: URL
     let appBundle: URL
+    var opencodeConfigurationDirectory: URL? = nil
+
+    var opencodePluginURL: URL {
+        let root = opencodeConfigurationDirectory
+            ?? FileManager.default.homeDirectoryForCurrentUser.appending(path: ".config/opencode")
+        return root.appending(path: "plugins/cuedex.js")
+    }
+
+    var opencodeGateURL: URL { applicationSupport.appending(path: "opencode-enabled") }
 
     var eventsDirectory: URL {
         applicationSupport.appending(path: "Events", directoryHint: .isDirectory)
@@ -45,7 +54,10 @@ struct CueDexPaths: Sendable {
         return CueDexPaths(
             applicationSupport: supportRoot.appending(path: "CueDex", directoryHint: .isDirectory),
             codexHome: codexHome,
-            appBundle: bundle.bundleURL
+            appBundle: bundle.bundleURL,
+            opencodeConfigurationDirectory: URL(filePath: environment["XDG_CONFIG_HOME"]
+                ?? fileManager.homeDirectoryForCurrentUser.appending(path: ".config").path)
+                .appending(path: "opencode", directoryHint: .isDirectory)
         )
     }
 }

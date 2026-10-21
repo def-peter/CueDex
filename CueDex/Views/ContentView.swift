@@ -9,24 +9,18 @@ struct ContentView: View {
             GeneralSettingsView(
                 preferences: model.preferences,
                 integration: model.integration,
-                loginItem: model.loginItem
+                loginItem: model.loginItem,
+                model: model
             )
             .tabItem { Label("General", systemImage: "gearshape") }
 
-            GlowSettingsView(preferences: model.preferences, testGlow: model.testGlow)
-                .tabItem { Label("Glow", systemImage: "sparkles") }
-
-            SoundSettingsView(
-                preferences: model.preferences,
-                testSound: model.testSound,
-                testSpeech: model.testSpeech
-            )
-                .tabItem { Label("Sound", systemImage: "speaker.wave.2") }
+            ReminderSettingsView(model: model)
+                .tabItem { Label("Cues", systemImage: "bell") }
 
             AboutSettingsView(updates: model.updates)
                 .tabItem { Label("About", systemImage: "info.circle") }
         }
-        .frame(width: 520, height: 430)
+        .frame(width: 660, height: 500)
         .environment(\.locale, model.preferences.appLanguage.locale)
         .task { model.start() }
         .alert(

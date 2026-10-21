@@ -4,13 +4,14 @@ struct SoundSettingsView: View {
     @Bindable var preferences: PreferencesStore
     let testSound: () -> Void
     let testSpeech: () -> Void
+    var canPreview = true
     @State private var isVoicePickerPresented = false
     @State private var customSoundImportError: String?
 
     var body: some View {
         Form {
             Section("Notification Sound") {
-                Toggle("Play notification sound", isOn: $preferences.soundEnabled)
+                Toggle("Enabled", isOn: $preferences.soundEnabled)
 
                 Picker("Sound", selection: $preferences.soundIdentifier) {
                     ForEach(SoundController.systemSounds, id: \.self) { sound in
@@ -19,18 +20,6 @@ struct SoundSettingsView: View {
                     if preferences.customSoundPath != nil {
                         Divider()
                         Text(customSoundName).tag("custom")
-                    }
-                }
-                .disabled(!preferences.soundEnabled)
-
-                LabeledContent("Volume") {
-                    HStack(spacing: 10) {
-                        Image(systemName: "speaker.wave.1")
-                            .foregroundStyle(.secondary)
-                        Slider(value: $preferences.soundVolume, in: 0...1)
-                            .frame(width: 210)
-                        Image(systemName: "speaker.wave.3")
-                            .foregroundStyle(.secondary)
                     }
                 }
                 .disabled(!preferences.soundEnabled)
@@ -63,11 +52,11 @@ struct SoundSettingsView: View {
                         .foregroundStyle(.red)
                 }
                 Button("Test Sound", systemImage: "play.fill", action: testSound)
-                    .disabled(!preferences.soundEnabled)
+                    .disabled(!preferences.soundEnabled || !canPreview)
             }
 
             Section("Speech") {
-                Toggle("Voice notification", isOn: $preferences.speechEnabled)
+                Toggle("Enabled", isOn: $preferences.speechEnabled)
 
                 Picker("Mode", selection: $preferences.speechMode) {
                     ForEach(SpeechMode.allCases) { mode in
@@ -119,20 +108,14 @@ struct SoundSettingsView: View {
                     .disabled(!preferences.speechEnabled)
                 }
 
-                LabeledContent("Volume") {
-                    HStack(spacing: 10) {
-                        Image(systemName: "speaker.wave.1")
-                            .foregroundStyle(.secondary)
-                        Slider(value: $preferences.speechVolume, in: 0...1)
-                            .frame(width: 210)
-                        Image(systemName: "speaker.wave.3")
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                .disabled(!preferences.speechEnabled)
-
                 Button("Test Speech", systemImage: "waveform", action: testSpeech)
-                    .disabled(!canTestSpeech)
+                    .disabled(!canTestSpeech || !canPreview)
+            }
+
+            Section {
+                Text("Notification sounds and speech follow the system volume.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

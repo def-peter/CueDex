@@ -4,6 +4,10 @@ struct GeneralSettingsView: View {
     @Bindable var preferences: PreferencesStore
     @Bindable var integration: CodexIntegrationInstaller
     @Bindable var loginItem: LoginItemController
+    let model: AppModel
+    @State private var actionSource = AttentionSource.codex
+    @State private var actionEnablesIntegration = true
+    @State private var isConfirmingIntegration = false
 
     var body: some View {
         Form {
@@ -17,37 +21,8 @@ struct GeneralSettingsView: View {
                 .labelsHidden()
             }
 
-            Section("Codex") {
-                LabeledContent("Integration") {
-                    HStack(spacing: 8) {
-                        Circle()
-                            .fill(statusColor)
-                            .frame(width: 8, height: 8)
-                        Text(LocalizedStringKey(integration.status.title))
-                            .foregroundStyle(.secondary)
-                    }
-                }
-
-                integrationAction
-
-                if integration.requiresHookTrust {
-                    Label {
-                        Text("Open Settings > Hooks in Codex to review and trust CueDex. If CueDex does not appear, restart ChatGPT and try again.")
-                            .fixedSize(horizontal: false, vertical: true)
-                    } icon: {
-                        Image(systemName: "checkmark.shield.fill")
-                            .foregroundStyle(.blue)
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                }
-
-                if let error = integration.lastError {
-                    Text(LocalizedStringKey(error))
-                        .font(.caption)
-                        .foregroundStyle(.red)
-                }
-            }
+            integrationSection(.codex)
+            integrationSection(.opencode)
 
             Section("Behavior") {
                 Toggle("Pause notifications", isOn: $preferences.isPaused)
@@ -72,27 +47,74 @@ struct GeneralSettingsView: View {
             }
         }
         .formStyle(.grouped)
-    }
-
-    @ViewBuilder
-    private var integrationAction: some View {
-        switch integration.status {
-        case .installed:
-            Button("Disable Integration", systemImage: "link.badge.minus") {
-                integration.uninstall()
+        .confirmationDialog(
+            LocalizedStringKey(actionEnablesIntegration ? "Enable Integration" : "Disable Integration"),
+            isPresented: $isConfirmingIntegration,
+            titleVisibility: .visible
+        ) {
+            Button(LocalizedStringKey(actionEnablesIntegration ? "Enable Integration" : "Disable Integration")) {
+                let source = actionSource
+                if actionEnablesIntegration {
+                    Task { await model.enableIntegration(source) }
+                } else {
+                    model.disableIntegration(source)
+                }
             }
-        case .notInstalled, .unavailable:
-            Button("Enable Integration", systemImage: "link.badge.plus") {
-                integration.install()
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            if actionSource == .codex {
+                Text("Only CueDex's Stop hook is added or removed. Other hooks and saved cue settings are preserved.")
+                Text(verbatim: integration.paths.codexHooksURL.path)
+            } else {
+                Text("Only CueDex's global plugin is added or removed. It applies to local projects. Other plugins and saved cue settings are preserved.")
+                Text(verbatim: model.opencodeIntegration.paths.opencodePluginURL.path)
             }
         }
     }
 
-    private var statusColor: Color {
-        switch integration.status {
-        case .installed: .green
-        case .notInstalled: .secondary
-        case .unavailable: .red
+    @ViewBuilder
+    private func integrationSection(_ source: AttentionSource) -> some View {
+        Section {
+            LabeledContent("Integration") {
+                if source == .codex {
+                    Text(LocalizedStringKey(integration.status.title)).foregroundStyle(.secondary)
+                } else {
+                    Text(LocalizedStringKey(model.opencodeIntegration.isInstalled ? "Configured" : "Not enabled"))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            if let date = model.lastReceived[source] {
+                LabeledContent("Last completion received") {
+                    Text(date, format: .dateTime.month().day().hour().minute())
+                        .foregroundStyle(.secondary)
+                }
+            } else {
+                LabeledContent("Last completion received") { Text("None received").foregroundStyle(.secondary) }
+            }
+            Button(LocalizedStringKey(model.isInstalled(source) ? "Disable Integration" : "Enable Integration")) {
+                actionSource = source
+                actionEnablesIntegration = !model.isInstalled(source)
+                isConfirmingIntegration = true
+            }
+            .disabled(source == .opencode && model.opencodeIntegration.isCheckingVersion)
+
+            if source == .codex && integration.isInstalled {
+                Text("Open Settings > Hooks in Codex to review and trust CueDex. If CueDex does not appear, restart ChatGPT and try again.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if source == .opencode {
+                LabeledContent("Detected CLI version") {
+                    Text(verbatim: model.opencodeIntegration.detectedVersion ?? "—")
+                        .foregroundStyle(.secondary)
+                }
+                Text("Requires OpenCode V2.1.1. Global plugin changes may require reloading OpenCode. CueDex will not restart it.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            if let error = source == .codex ? integration.lastError : model.opencodeIntegration.lastError {
+                Text(LocalizedStringKey(error)).font(.caption).foregroundStyle(.red)
+            }
+        } header: {
+            Text(verbatim: source.title)
         }
     }
 

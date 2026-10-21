@@ -15,9 +15,13 @@ enum AppLanguage: String, Codable, CaseIterable, Identifiable {
     }
 
     var defaultSpeechText: String {
+        defaultSpeechText(for: .codex)
+    }
+
+    func defaultSpeechText(for source: AttentionSource) -> String {
         switch self {
-        case .simplifiedChinese: "Codex 已回复完成。"
-        case .english: "Codex has finished responding."
+        case .simplifiedChinese: "\(source.title) 已回复完成。"
+        case .english: "\(source.title) has finished responding."
         }
     }
 }

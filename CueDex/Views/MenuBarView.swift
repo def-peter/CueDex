@@ -7,7 +7,11 @@ struct MenuBarView: View {
 
     var body: some View {
         Group {
-            Button("Test Cue", systemImage: "play.fill", action: model.testCue)
+            Menu("Test Cue", systemImage: "play.fill") {
+                Button("Test Codex") { model.testCue(source: .codex) }
+                Button("Test OpenCode") { model.testCue(source: .opencode) }
+            }
+            .disabled(model.isPlayingCue)
 
             Toggle("Pause Notifications", isOn: Binding(
                 get: { model.preferences.isPaused },

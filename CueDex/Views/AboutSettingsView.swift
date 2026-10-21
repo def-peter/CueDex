@@ -36,7 +36,7 @@ struct AboutSettingsView: View {
             .foregroundStyle(.tertiary)
             .padding(.top, 2)
 
-            Text("CueDex notifies you with screen-edge glow, sound, or speech when Codex finishes responding.")
+            Text("CueDex routes Codex and OpenCode completion events to screen-edge glow, sound, or speech.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

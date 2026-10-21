@@ -2,7 +2,7 @@ import Darwin
 import Foundation
 import OSLog
 
-final class CodexEventMonitor: @unchecked Sendable {
+final class CueEventMonitor: @unchecked Sendable {
     private let logger = Logger(subsystem: "com.peter.CueDex", category: "Events")
     private let fileManager: FileManager
     private let eventsDirectory: URL
@@ -10,7 +10,7 @@ final class CodexEventMonitor: @unchecked Sendable {
     private let queue = DispatchQueue(label: "com.peter.CueDex.events", qos: .utility)
     private var source: DispatchSourceFileSystemObject?
     private var fileDescriptor: Int32 = -1
-    private var handler: (@MainActor @Sendable () -> Void)?
+    private var handler: (@MainActor @Sendable (CueEvent) -> Void)?
 
     init(
         eventsDirectory: URL,
@@ -30,10 +30,10 @@ final class CodexEventMonitor: @unchecked Sendable {
         }
     }
 
-    func start(handler: @escaping @MainActor @Sendable () -> Void) throws {
+    func start(handler: @escaping @MainActor @Sendable (CueEvent) -> Void) throws {
         guard source == nil else { return }
         self.handler = handler
-        try fileManager.createDirectory(at: eventsDirectory, withIntermediateDirectories: true)
+        try fileManager.createDirectory(at: eventsDirectory, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
 
         fileDescriptor = open(eventsDirectory.path, O_EVTONLY)
         guard fileDescriptor >= 0 else {
@@ -50,34 +50,49 @@ final class CodexEventMonitor: @unchecked Sendable {
         self.source = source
         source.resume()
         queue.async { [weak self] in self?.consumePendingEvents() }
-        logger.info("Started local Codex event monitor")
+        logger.info("Started local cue event monitor")
     }
 
     private func consumePendingEvents() {
         guard let urls = try? fileManager.contentsOfDirectory(
             at: eventsDirectory,
-            includingPropertiesForKeys: [.contentModificationDateKey],
+            includingPropertiesForKeys: [.contentModificationDateKey, .isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey],
             options: [.skipsHiddenFiles]
         ) else { return }
 
         let now = Date()
-        var freshEventCount = 0
-        for url in urls where url.lastPathComponent.hasPrefix("turn-complete.") {
-            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey])
+        var events: [CueEvent] = []
+        for url in urls where url.lastPathComponent.hasPrefix("turn-complete.")
+            || (url.lastPathComponent.hasPrefix("cue-") && url.pathExtension == "json") {
+            let values = try? url.resourceValues(forKeys: [.contentModificationDateKey, .isRegularFileKey, .isSymbolicLinkKey, .fileSizeKey])
+            guard values?.isRegularFile == true, values?.isSymbolicLink != true else { continue }
             if let modified = values?.contentModificationDate,
                Self.isFreshEvent(
                    modifiedAt: modified,
                    now: now,
                    freshnessInterval: freshnessInterval
                ) {
-                freshEventCount += 1
+                if let size = values?.fileSize, size <= 16_384, let data = try? Data(contentsOf: url) {
+                    if let event = try? CueEvent.decode(data) {
+                        events.append(event)
+                    } else if data.isEmpty && url.lastPathComponent.hasPrefix("turn-complete.") {
+                        // Existing installed helpers remain valid during the upgrade.
+                        events.append(CueEvent(
+                            source: .codex,
+                            eventID: "legacy-\(url.lastPathComponent)-\(modified.timeIntervalSince1970)",
+                            sessionID: "legacy", completedAt: modified
+                        ))
+                    }
+                }
             }
             try? fileManager.removeItem(at: url)
         }
 
-        guard freshEventCount > 0, let handler else { return }
-        logger.info("Received \(freshEventCount, privacy: .public) completion event(s)")
-        Task { @MainActor in handler() }
+        guard !events.isEmpty, let handler else { return }
+        let sorted = events.sorted { $0.completedAt < $1.completedAt }
+        Task { @MainActor in
+            for event in sorted { handler(event) }
+        }
     }
 
     nonisolated static func isFreshEvent(

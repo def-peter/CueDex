@@ -6,13 +6,22 @@ import SwiftUI
 @MainActor
 @Observable
 final class PreferencesStore {
-    private static let storageKey = "cuedex.preferences.v1"
+    private static let storageKey = "cuedex.preferences.v2"
 
     private let defaults: UserDefaults
     private let customSoundStorage: CustomSoundStorage
-    private(set) var preferences: CuePreferences {
+    private(set) var settings: AppPreferences {
         didSet { persist() }
     }
+    var selectedSource = AttentionSource.codex
+    @ObservationIgnored var deliveryPolicyDidChange: (() -> Void)?
+
+    var preferences: CuePreferences {
+        get { settings[selectedSource] }
+        set { settings[selectedSource] = newValue }
+    }
+
+    func profile(for source: AttentionSource) -> CuePreferences { settings[source] }
 
     init(
         defaults: UserDefaults = .standard,
@@ -22,31 +31,38 @@ final class PreferencesStore {
         self.customSoundStorage = customSoundStorage ?? .live()
 
         if let data = defaults.data(forKey: Self.storageKey),
-           let decoded = try? JSONDecoder().decode(CuePreferences.self, from: data) {
-            preferences = decoded
+            let decoded = try? JSONDecoder().decode(AppPreferences.self, from: data) {
+            settings = decoded
         } else {
-            preferences = .defaults
+            settings = AppPreferences(legacyData: defaults.data(forKey: "cuedex.preferences.v1"))
         }
 
-        repairCustomSoundPreference()
+        for source in AttentionSource.allCases {
+            selectedSource = source
+            repairCustomSoundPreference()
+        }
+        selectedSource = .codex
+        persist()
     }
 
     var appLanguage: AppLanguage {
-        get { preferences.appLanguage }
+        get { settings.global.appLanguage }
         set {
-            var updated = preferences
-            let usesDefaultSpeechText = updated.speechText == updated.appLanguage.defaultSpeechText
-            updated.appLanguage = newValue
-            if usesDefaultSpeechText {
-                updated.speechText = newValue.defaultSpeechText
+            var updated = settings
+            let previousLanguage = settings.global.appLanguage
+            for source in AttentionSource.allCases {
+                if updated[source].speechText == previousLanguage.defaultSpeechText(for: source) {
+                    updated[source].speechText = newValue.defaultSpeechText(for: source)
+                }
             }
-            preferences = updated
+            updated.global.appLanguage = newValue
+            settings = updated
         }
     }
 
     var isPaused: Bool {
-        get { preferences.isPaused }
-        set { preferences.isPaused = newValue }
+        get { settings.global.isPaused }
+        set { settings.global.isPaused = newValue; deliveryPolicyDidChange?() }
     }
 
     var glowEnabled: Bool {
@@ -72,11 +88,6 @@ final class PreferencesStore {
     var prerecordedSpeech: PrerecordedSpeech {
         get { preferences.prerecordedSpeech }
         set { preferences.prerecordedSpeech = newValue }
-    }
-
-    var speechVolume: Double {
-        get { preferences.speechVolume }
-        set { preferences.speechVolume = min(max(newValue, 0), 1) }
     }
 
     var breathingGlowColor: Color {
@@ -127,16 +138,6 @@ final class PreferencesStore {
         }
     }
 
-    var glowIntensity: Double {
-        get { preferences.glowIntensity }
-        set { preferences.glowIntensity = min(max(newValue, 0.2), 1) }
-    }
-
-    var glowDuration: Double {
-        get { preferences.glowDuration }
-        set { preferences.glowDuration = min(max(newValue, 0.8), 5) }
-    }
-
     var glowAnimation: GlowAnimationStyle {
         get { preferences.glowAnimation }
         set { preferences.glowAnimation = newValue }
@@ -145,11 +146,6 @@ final class PreferencesStore {
     var soundIdentifier: String {
         get { preferences.soundIdentifier }
         set { preferences.soundIdentifier = newValue }
-    }
-
-    var soundVolume: Double {
-        get { preferences.soundVolume }
-        set { preferences.soundVolume = min(max(newValue, 0), 1) }
     }
 
     var customSoundPath: String? {
@@ -171,18 +167,18 @@ final class PreferencesStore {
     }
 
     var quietHoursEnabled: Bool {
-        get { preferences.quietHoursEnabled }
-        set { preferences.quietHoursEnabled = newValue }
+        get { settings.global.quietHoursEnabled }
+        set { settings.global.quietHoursEnabled = newValue; deliveryPolicyDidChange?() }
     }
 
     var quietHoursStartMinutes: Int {
-        get { preferences.quietHoursStartMinutes }
-        set { preferences.quietHoursStartMinutes = min(max(newValue, 0), 1439) }
+        get { settings.global.quietHoursStartMinutes }
+        set { settings.global.quietHoursStartMinutes = min(max(newValue, 0), 1439); deliveryPolicyDidChange?() }
     }
 
     var quietHoursEndMinutes: Int {
-        get { preferences.quietHoursEndMinutes }
-        set { preferences.quietHoursEndMinutes = min(max(newValue, 0), 1439) }
+        get { settings.global.quietHoursEndMinutes }
+        set { settings.global.quietHoursEndMinutes = min(max(newValue, 0), 1439); deliveryPolicyDidChange?() }
     }
 
     func setCustomSound(_ url: URL) throws {
@@ -195,21 +191,21 @@ final class PreferencesStore {
         updated.soundIdentifier = "custom"
         preferences = updated
 
-        customSoundStorage.removeManagedSound(at: previousURL)
+        removeUnreferencedSound(at: previousURL)
     }
 
     func removeCustomSound() {
         let currentURL = preferences.customSoundPath.map { URL(filePath: $0) }
-        customSoundStorage.removeManagedSound(at: currentURL)
         clearCustomSoundPreference()
+        removeUnreferencedSound(at: currentURL)
     }
 
     func shouldDeliver(at date: Date = .now, calendar: Calendar = .current) -> Bool {
-        !preferences.isPaused && !preferences.isQuiet(at: date, calendar: calendar)
+        !settings.global.isPaused && !settings.global.isQuiet(at: date, calendar: calendar)
     }
 
     private func persist() {
-        guard let data = try? JSONEncoder().encode(preferences) else { return }
+        guard let data = try? JSONEncoder().encode(settings) else { return }
         defaults.set(data, forKey: Self.storageKey)
     }
 
@@ -239,6 +235,12 @@ final class PreferencesStore {
         } catch {
             // Keep a valid legacy path usable if migration fails.
         }
+    }
+
+    private func removeUnreferencedSound(at url: URL?) {
+        guard let url else { return }
+        guard !AttentionSource.allCases.contains(where: { settings[$0].customSoundPath == url.path }) else { return }
+        customSoundStorage.removeManagedSound(at: url)
     }
 
     private func clearCustomSoundPreference() {

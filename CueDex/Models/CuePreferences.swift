@@ -33,8 +33,6 @@ enum GlowAnimationStyle: String, Codable, CaseIterable, Identifiable {
 }
 
 struct CuePreferences: Codable, Equatable {
-    var appLanguage = AppLanguage.simplifiedChinese
-    var isPaused = false
     var glowEnabled = true
     var soundEnabled = true
     var speechEnabled = false
@@ -47,33 +45,37 @@ struct CuePreferences: Codable, Equatable {
     var glowSecondaryRed = 0.15
     var glowSecondaryGreen = 0.48
     var glowSecondaryBlue = 1.0
-    var glowIntensity = 0.62
-    var glowDuration = 2.4
     var glowAnimation = GlowAnimationStyle.breathing
     var soundIdentifier = "Glass"
-    var soundVolume = 0.7
     var customSoundPath: String?
     var customSoundName: String?
     var speechMode = SpeechMode.system
     var prerecordedSpeech = PrerecordedSpeech.messageReminderMale
-    var speechVolume = 0.8
     var speechVoiceIdentifier: String?
     var speechText = AppLanguage.simplifiedChinese.defaultSpeechText
-    var quietHoursEnabled = false
-    var quietHoursStartMinutes = 22 * 60
-    var quietHoursEndMinutes = 8 * 60
 
     static let defaults = CuePreferences()
 
     init() {}
 
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let defaults = Self()
+    static func defaults(for source: AttentionSource, language: AppLanguage) -> Self {
+        var result = Self()
+        result.speechText = language.defaultSpeechText(for: source)
+        return result
+    }
 
-        let storedLanguage = try container.decodeIfPresent(AppLanguage.self, forKey: .appLanguage)
-        appLanguage = storedLanguage ?? defaults.appLanguage
-        isPaused = try container.decodeIfPresent(Bool.self, forKey: .isPaused) ?? defaults.isPaused
+    init(from decoder: Decoder) throws {
+        try self.init(from: decoder, defaultSpeechText: AppLanguage.simplifiedChinese.defaultSpeechText, isLegacy: true)
+    }
+
+    init(from decoder: Decoder, defaultSpeechText: String, isLegacy: Bool = false) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        var defaults = Self()
+        defaults.speechText = defaultSpeechText
+
+        let legacy = try decoder.container(keyedBy: LegacyKeys.self)
+        let storedLanguage = try legacy.decodeIfPresent(AppLanguage.self, forKey: .appLanguage)
+        if let storedLanguage { defaults.speechText = storedLanguage.defaultSpeechText }
         glowEnabled = try container.decodeIfPresent(Bool.self, forKey: .glowEnabled) ?? defaults.glowEnabled
         let storedSoundEnabled = try container.decodeIfPresent(Bool.self, forKey: .soundEnabled) ?? defaults.soundEnabled
         let storedSpeechEnabled = try container.decodeIfPresent(Bool.self, forKey: .speechEnabled) ?? defaults.speechEnabled
@@ -97,11 +99,8 @@ struct CuePreferences: Codable, Equatable {
         glowSecondaryRed = try container.decodeIfPresent(Double.self, forKey: .glowSecondaryRed) ?? defaults.glowSecondaryRed
         glowSecondaryGreen = try container.decodeIfPresent(Double.self, forKey: .glowSecondaryGreen) ?? defaults.glowSecondaryGreen
         glowSecondaryBlue = try container.decodeIfPresent(Double.self, forKey: .glowSecondaryBlue) ?? defaults.glowSecondaryBlue
-        glowIntensity = try container.decodeIfPresent(Double.self, forKey: .glowIntensity) ?? defaults.glowIntensity
-        glowDuration = try container.decodeIfPresent(Double.self, forKey: .glowDuration) ?? defaults.glowDuration
         glowAnimation = try container.decodeIfPresent(GlowAnimationStyle.self, forKey: .glowAnimation) ?? defaults.glowAnimation
         soundIdentifier = try container.decodeIfPresent(String.self, forKey: .soundIdentifier) ?? defaults.soundIdentifier
-        soundVolume = try container.decodeIfPresent(Double.self, forKey: .soundVolume) ?? defaults.soundVolume
         customSoundPath = try container.decodeIfPresent(String.self, forKey: .customSoundPath)
         customSoundName = try container.decodeIfPresent(String.self, forKey: .customSoundName)
             ?? customSoundPath.map { URL(filePath: $0).deletingPathExtension().lastPathComponent }
@@ -111,7 +110,6 @@ struct CuePreferences: Codable, Equatable {
         let storedPrerecordedSpeech = try container.decodeIfPresent(String.self, forKey: .prerecordedSpeech)
             .flatMap(PrerecordedSpeech.storedValue)
         prerecordedSpeech = storedPrerecordedSpeech ?? defaults.prerecordedSpeech
-        speechVolume = try container.decodeIfPresent(Double.self, forKey: .speechVolume) ?? defaults.speechVolume
 
         if storedSpeechMode == nil,
            let legacyRecording = PrerecordedSpeech.storedValue(soundIdentifier) {
@@ -124,37 +122,20 @@ struct CuePreferences: Codable, Equatable {
                 speechEnabled = true
             } else {
                 speechMode = .prerecorded
-                speechVolume = soundVolume
                 speechEnabled = storedSoundEnabled
             }
         }
 
         speechVoiceIdentifier = try container.decodeIfPresent(String.self, forKey: .speechVoiceIdentifier)
         let storedSpeechText = try container.decodeIfPresent(String.self, forKey: .speechText)
-        if storedLanguage == nil, storedSpeechText == AppLanguage.english.defaultSpeechText {
+        if isLegacy, storedLanguage == nil, storedSpeechText == AppLanguage.english.defaultSpeechText {
             speechText = defaults.speechText
         } else {
             speechText = storedSpeechText ?? defaults.speechText
         }
-        quietHoursEnabled = try container.decodeIfPresent(Bool.self, forKey: .quietHoursEnabled) ?? defaults.quietHoursEnabled
-        quietHoursStartMinutes = try container.decodeIfPresent(Int.self, forKey: .quietHoursStartMinutes) ?? defaults.quietHoursStartMinutes
-        quietHoursEndMinutes = try container.decodeIfPresent(Int.self, forKey: .quietHoursEndMinutes) ?? defaults.quietHoursEndMinutes
     }
 
-    func isQuiet(at date: Date, calendar: Calendar = .current) -> Bool {
-        guard quietHoursEnabled else { return false }
-
-        let components = calendar.dateComponents([.hour, .minute], from: date)
-        let currentMinutes = (components.hour ?? 0) * 60 + (components.minute ?? 0)
-
-        if quietHoursStartMinutes == quietHoursEndMinutes {
-            return true
-        }
-
-        if quietHoursStartMinutes < quietHoursEndMinutes {
-            return quietHoursStartMinutes <= currentMinutes && currentMinutes < quietHoursEndMinutes
-        }
-
-        return currentMinutes >= quietHoursStartMinutes || currentMinutes < quietHoursEndMinutes
+    private enum LegacyKeys: String, CodingKey {
+        case appLanguage
     }
 }

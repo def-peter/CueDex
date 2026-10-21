@@ -5,8 +5,8 @@ import QuartzCore
 struct GlowPresentation: Sendable {
     let primaryColor: NSColor
     let secondaryColor: NSColor
-    let intensity: Double
-    let duration: TimeInterval
+    let intensity = 1.0
+    let duration: TimeInterval = 3
     let animation: GlowAnimationStyle
 }
 
@@ -16,7 +16,7 @@ final class ScreenGlowController {
     private var overlays: [EdgeGlowPanel] = []
     private var presentationID = UUID()
 
-    func show(_ presentation: GlowPresentation) {
+    func show(_ presentation: GlowPresentation, completion: @escaping () -> Void = {}) {
         dismiss()
         presentationID = UUID()
         let activePresentationID = presentationID
@@ -28,6 +28,7 @@ final class ScreenGlowController {
         DispatchQueue.main.asyncAfter(deadline: .now() + presentation.duration + 0.15) { [weak self] in
             guard self?.presentationID == activePresentationID else { return }
             self?.dismiss()
+            completion()
         }
     }
 

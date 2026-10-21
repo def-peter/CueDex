@@ -1,9 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "%.1f s" : {
-
-    },
     "About" : {
       "localizations" : {
         "zh-Hans" : {
@@ -20,6 +17,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "外观"
+          }
+        }
+      }
+    },
+    "Attention Source" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Attention Source"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒来源"
           }
         }
       }
@@ -66,7 +79,6 @@
       }
     },
     "Cancel" : {
-      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -139,9 +151,6 @@
         }
       }
     },
-    "Codex" : {
-
-    },
     "Codex already has a notifier configured. Replace it only if CueDex should become the active notifier." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -159,6 +168,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "颜色"
+          }
+        }
+      }
+    },
+    "Configured" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configured"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已配置"
           }
         }
       }
@@ -181,6 +207,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "提示音"
+          }
+        }
+      }
+    },
+    "Cue Type" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cue Type"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒类型"
           }
         }
       }
@@ -210,11 +252,28 @@
       }
     },
     "CueDex notifies you with screen-edge glow, sound, or speech when Codex finishes responding." : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "当 Codex 完成回复时，CueDex 会通过屏幕边缘光效、提示音或语音及时提醒你。"
+          }
+        }
+      }
+    },
+    "CueDex routes Codex and OpenCode completion events to screen-edge glow, sound, or speech." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CueDex routes Codex and OpenCode completion events to screen-edge glow, sound, or speech."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "当 Codex 或 OpenCode 完成回复时，CueDex 会通过屏幕边缘光效、提示音或语音提醒你。"
           }
         }
       }
@@ -230,25 +289,48 @@
         }
       }
     },
+    "Cues" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cues"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提醒"
+          }
+        }
+      }
+    },
     "Custom" : {
 
     },
+    "Detected CLI version" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detected CLI version"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "检测到的 CLI 版本"
+          }
+        }
+      }
+    },
     "Disable Integration" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "停用集成"
-          }
-        }
-      }
-    },
-    "Duration" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "持续时间"
           }
         }
       }
@@ -264,6 +346,7 @@
       }
     },
     "Enable Integration" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -279,6 +362,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "启用免打扰时段"
+          }
+        }
+      }
+    },
+    "Enabled" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enabled"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "是否启用"
           }
         }
       }
@@ -355,22 +454,28 @@
         }
       }
     },
-    "Intensity" : {
-      "localizations" : {
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "强度"
-          }
-        }
-      }
-    },
     "Language" : {
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "语言"
+          }
+        }
+      }
+    },
+    "Last completion received" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Last completion received"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "最近收到完成事件"
           }
         }
       }
@@ -469,6 +574,22 @@
         }
       }
     },
+    "None received" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "None received"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "尚未收到"
+          }
+        }
+      }
+    },
     "Not enabled" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -486,6 +607,71 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "通知音"
+          }
+        }
+      }
+    },
+    "Notification sounds and speech follow the system volume." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Notification sounds and speech follow the system volume."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "提示音和语音均跟随系统音量。"
+          }
+        }
+      }
+    },
+    "Only CueDex's global plugin is added or removed. It applies to local projects. Other plugins and saved cue settings are preserved." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only CueDex's global plugin is added or removed. It applies to local projects. Other plugins and saved cue settings are preserved."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅添加或移除 CueDex 的全局插件，作用于本地项目。其他插件和已保存的提醒配置会保留。"
+          }
+        }
+      }
+    },
+    "Only CueDex's Stop hook is added or removed. Other hooks and saved cue settings are preserved." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only CueDex's Stop hook is added or removed. Other hooks and saved cue settings are preserved."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "仅添加或移除 CueDex 的 Stop hook，其他 hooks 和已保存的提醒配置会保留。"
+          }
+        }
+      }
+    },
+    "Only OpenCode V2.1.1 is verified. Install that version before enabling integration." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Only OpenCode V2.1.1 is verified. Install that version before enabling integration."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "目前仅核实 OpenCode V2.1.1，请安装该版本后再启用接入。"
           }
         }
       }
@@ -521,6 +707,7 @@
       }
     },
     "Play notification sound" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -613,7 +800,24 @@
         }
       }
     },
+    "Requires OpenCode V2.1.1. Global plugin changes may require reloading OpenCode. CueDex will not restart it." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requires OpenCode V2.1.1. Global plugin changes may require reloading OpenCode. CueDex will not restart it."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "需要 OpenCode V2.1.1。全局插件变更可能需要重新加载 OpenCode，CueDex 不会自动重启它。"
+          }
+        }
+      }
+    },
     "Screen-edge glow" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -716,6 +920,22 @@
         }
       }
     },
+    "Test Codex" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test Codex"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "测试 Codex"
+          }
+        }
+      }
+    },
     "Test Cue" : {
       "localizations" : {
         "zh-Hans" : {
@@ -736,6 +956,22 @@
         }
       }
     },
+    "Test OpenCode" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Test OpenCode"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "测试 OpenCode"
+          }
+        }
+      }
+    },
     "Test Sound" : {
       "localizations" : {
         "zh-Hans" : {
@@ -752,6 +988,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "测试语音"
+          }
+        }
+      }
+    },
+    "Tests preview this source's effects only; they do not verify integration." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tests preview this source's effects only; they do not verify integration."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "测试仅预览当前来源的效果，不代表接入已验证。"
           }
         }
       }
@@ -794,6 +1046,40 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "无法导入音频文件。"
+          }
+        }
+      }
+    },
+    "Unable to install the CueDex OpenCode plugin. Existing unowned files are never replaced." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to install the CueDex OpenCode plugin. Existing unowned files are never replaced."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法安装 CueDex OpenCode 插件，不会覆盖不属于 CueDex 的已有文件。"
+          }
+        }
+      }
+    },
+    "Unable to remove the CueDex OpenCode plugin. Existing unowned files are never removed." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to remove the CueDex OpenCode plugin. Existing unowned files are never removed."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法移除 CueDex OpenCode 插件，不会删除不属于 CueDex 的已有文件。"
           }
         }
       }
@@ -881,6 +1167,7 @@
       }
     },
     "Voice notification" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {
@@ -891,6 +1178,7 @@
       }
     },
     "Volume" : {
+      "extractionState" : "stale",
       "localizations" : {
         "zh-Hans" : {
           "stringUnit" : {

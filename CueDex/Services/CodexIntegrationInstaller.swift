@@ -10,7 +10,7 @@ enum CodexIntegrationStatus: Equatable {
     var title: String {
         switch self {
         case .notInstalled: "Not enabled"
-        case .installed: "Connected"
+        case .installed: "Configured"
         case .unavailable: "Unavailable"
         }
     }
@@ -270,6 +270,7 @@ final class CodexIntegrationInstaller {
         let script = """
         #!/bin/sh
         set -eu
+        umask 077
         PAYLOAD=$(/bin/cat)
         EVENT_DIR=\(eventDirectory)
         DIAGNOSTICS_DIR=\(diagnosticsDirectory)
@@ -277,7 +278,8 @@ final class CodexIntegrationInstaller {
         /bin/mkdir -p "$DIAGNOSTICS_DIR"
 
         extract_field() {
-            printf '%s' "$PAYLOAD" | /usr/bin/plutil -extract "$1" raw -o - - 2>/dev/null || true
+            FIELD_VALUE=$(printf '%s' "$PAYLOAD" | /usr/bin/plutil -extract "$1" raw -o - - 2>/dev/null) || return 0
+            printf '%s' "$FIELD_VALUE"
         }
 
         add_string_field() {
@@ -354,18 +356,27 @@ final class CodexIntegrationInstaller {
             exit 0
         fi
         if [ -n "$TURN_ID" ] && [ "$TURN_ID" != "null" ]; then
-            LAST_TURN_FILE="$EVENT_DIR/.last-turn-id"
-            PREVIOUS_TURN=$(/bin/cat "$LAST_TURN_FILE" 2>/dev/null || true)
-            if [ "$PREVIOUS_TURN" = "$TURN_ID" ]; then
+            /usr/bin/find "$EVENT_DIR" -maxdepth 1 -type d -name '.codex-turn-*' -mmin +2 -empty -delete 2>/dev/null || true
+            EVENT_ID=$(printf '%s\\n%s' "$SESSION_ID" "$TURN_ID" | /usr/bin/shasum -a 256 | /usr/bin/awk '{print $1}')
+            if ! /bin/mkdir "$EVENT_DIR/.codex-turn-$EVENT_ID" 2>/dev/null; then
                 DECISION="ignored_duplicate_turn"
                 write_diagnostic || true
                 exit 0
             fi
-            TEMP_LAST_TURN="$LAST_TURN_FILE.$$"
-            printf '%s' "$TURN_ID" > "$TEMP_LAST_TURN"
-            /bin/mv -f "$TEMP_LAST_TURN" "$LAST_TURN_FILE"
+        else
+            EVENT_ID=$(/usr/bin/uuidgen)
         fi
-        /usr/bin/touch "$EVENT_DIR/turn-complete.$$"
+        [ -n "$SESSION_ID" ] && [ "$SESSION_ID" != "null" ] || SESSION_ID="legacy"
+        EVENT_PLIST="$EVENT_DIR/.cue-$$.plist"
+        EVENT_TEMP="$EVENT_DIR/.cue-$$.json"
+        /usr/bin/plutil -create xml1 "$EVENT_PLIST"
+        /usr/bin/plutil -insert source -string codex "$EVENT_PLIST"
+        /usr/bin/plutil -insert eventID -string "$EVENT_ID" "$EVENT_PLIST"
+        /usr/bin/plutil -insert sessionID -string "$SESSION_ID" "$EVENT_PLIST"
+        /usr/bin/plutil -insert completedAt -integer "$(/bin/date '+%s')" "$EVENT_PLIST"
+        /usr/bin/plutil -convert json -o "$EVENT_TEMP" "$EVENT_PLIST"
+        /bin/mv -f "$EVENT_TEMP" "$EVENT_DIR/turn-complete.$$"
+        /bin/rm -f "$EVENT_PLIST"
         DECISION="notified"
         write_diagnostic || true
         /usr/bin/open -gj \(appBundle) >/dev/null 2>&1 || true

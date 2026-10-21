@@ -39,7 +39,7 @@ struct CueDexTests {
     }
 
     @Test func quietHoursAcrossMidnight() throws {
-        var preferences = CuePreferences.defaults
+        var preferences = GlobalPreferences()
         preferences.quietHoursEnabled = true
         preferences.quietHoursStartMinutes = 22 * 60
         preferences.quietHoursEndMinutes = 8 * 60
@@ -60,13 +60,10 @@ struct CueDexTests {
         let preferences = try JSONDecoder().decode(CuePreferences.self, from: data)
 
         #expect(!preferences.soundEnabled)
-        #expect(preferences.soundVolume == 0.25)
         #expect(!preferences.speechEnabled)
-        #expect(preferences.appLanguage == .simplifiedChinese)
         #expect(preferences.speechText == "Codex 已回复完成。")
         #expect(preferences.speechMode == .system)
         #expect(preferences.prerecordedSpeech == .messageReminderMale)
-        #expect(preferences.speechVolume == 0.8)
         #expect(preferences.glowEnabled)
         #expect(preferences.glowAnimation == .breathing)
         #expect(preferences.glowFlashPrimaryRed == 1.0)
@@ -84,7 +81,7 @@ struct CueDexTests {
         let preferences = try JSONDecoder().decode(CuePreferences.self, from: data)
 
         #expect(preferences.glowAnimation == .breathing)
-        #expect(preferences.glowDuration == 3.2)
+        #expect(CuePlaybackController.presentation(preferences).duration == 3)
     }
 
     @Test @MainActor func legacyMarqueeMigratesToAlternatingFlash() throws {
@@ -163,6 +160,7 @@ struct CueDexTests {
         let localizationBundle = try #require(Bundle(url: localizationURL))
 
         #expect(localizationBundle.localizedString(forKey: "General", value: nil, table: nil) == "通用")
+        #expect(localizationBundle.localizedString(forKey: "Enabled", value: nil, table: nil) == "是否启用")
         #expect(localizationBundle.localizedString(forKey: "Test Cue", value: nil, table: nil) == "测试提示")
         #expect(localizationBundle.localizedString(forKey: "Two-Color Flash", value: nil, table: nil) == "双色交替闪烁")
         #expect(localizationBundle.localizedString(forKey: "Pause notifications", value: nil, table: nil) == "暂停通知")
@@ -243,7 +241,6 @@ struct CueDexTests {
         #expect(preferences.speechEnabled)
         #expect(preferences.speechMode == .prerecorded)
         #expect(preferences.prerecordedSpeech == .checkYourMessagesFemale)
-        #expect(preferences.speechVolume == 0.35)
     }
 
     @Test @MainActor func disabledLegacyRecordingDoesNotDisableActiveSystemSpeech() throws {
@@ -370,11 +367,11 @@ struct CueDexTests {
     @Test @MainActor func speechUtterancePreservesNotificationText() {
         let text = "Finished; touch /tmp/should-not-exist"
 
-        let utterance = SpeechController.makeUtterance(text: text, volume: 0.42)
+        let utterance = SpeechController.makeUtterance(text: text)
 
         #expect(utterance.speechString == text)
         #expect(utterance.voice == nil)
-        #expect(abs(utterance.volume - 0.42) < 0.001)
+        #expect(utterance.volume == 1)
     }
 
     @Test @MainActor func speechUtteranceUsesSelectedSystemVoice() throws {
@@ -396,7 +393,6 @@ struct CueDexTests {
         store.speechEnabled = true
         store.speechMode = .prerecorded
         store.prerecordedSpeech = .checkYourMessagesMale
-        store.speechVolume = 0.45
         store.speechText = "The response is ready."
         store.speechVoiceIdentifier = "com.apple.voice.compact.en-US.Samantha"
 
@@ -404,7 +400,6 @@ struct CueDexTests {
         #expect(restored.speechEnabled)
         #expect(restored.speechMode == .prerecorded)
         #expect(restored.prerecordedSpeech == .checkYourMessagesMale)
-        #expect(restored.speechVolume == 0.45)
         #expect(restored.speechText == "The response is ready.")
         #expect(restored.speechVoiceIdentifier == "com.apple.voice.compact.en-US.Samantha")
     }
@@ -563,6 +558,19 @@ struct CueDexTests {
         #expect(decisions.contains("ignored_duplicate_turn"))
         #expect(decisions.contains("notified"))
 
+        let secondTurn = completedTurn.replacingOccurrences(of: "\"turn_id\":\"main\"", with: "\"turn_id\":\"second\"")
+        #expect(try runHelper(with: secondTurn) == 0)
+        #expect(try runHelper(with: completedTurn) == 0)
+        #expect(try completionEvents().count == 2)
+        let otherSession = completedTurn.replacingOccurrences(of: "\"session_id\":\"main\"", with: "\"session_id\":\"other\"")
+        #expect(try runHelper(with: otherSession) == 0)
+        #expect(try completionEvents().count == 3)
+        for file in try completionEvents() {
+            let event = try CueEvent.decode(Data(contentsOf: file))
+            #expect(event.source == .codex)
+            #expect(!String(decoding: try Data(contentsOf: file), as: UTF8.self).contains("Done"))
+        }
+
         for diagnosticFile in try diagnosticFiles() {
             let attributes = try fileManager.attributesOfItem(atPath: diagnosticFile.path)
             let permissions = attributes[.posixPermissions] as? NSNumber
@@ -623,12 +631,12 @@ struct CueDexTests {
     @Test func completionEventsExpireAfterOneMinute() {
         let now = Date()
 
-        #expect(CodexEventMonitor.isFreshEvent(
+        #expect(CueEventMonitor.isFreshEvent(
             modifiedAt: now.addingTimeInterval(-59),
             now: now,
             freshnessInterval: 60
         ))
-        #expect(!CodexEventMonitor.isFreshEvent(
+        #expect(!CueEventMonitor.isFreshEvent(
             modifiedAt: now.addingTimeInterval(-61),
             now: now,
             freshnessInterval: 60
