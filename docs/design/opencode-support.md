@@ -2,9 +2,9 @@
 
 ## 状态
 
-产品范围、交互选择与中途接入策略已在讨论中逐项确认，用户已批准开始技术验证与实现。实现进行中，尚未在用户的真实工具中安装接入，也未通过真实会话的端到端验证。
+双来源实现已随 v1.0.7 发布。2026-10-21，用户确认本机 OpenCode CLI 可触发真实提醒；OpenChamber 2.5.0 改用本机 OpenCode V2.1.1 并重载后，用户也确认收到真实主会话完成提醒。
 
-OpenCode 接入已找到版本匹配的 V2.1.1 事件契约，技术上有明确实现路径；运行中的服务兼容性、插件加载行为和真实事件投递仍须验证。首版只承诺经过验证的 V2 版本，不兼容 V1，也不据此宣称支持所有 V2 版本。
+已观察到上述 OpenChamber 后端加载受管理插件，并完成用户确认的真实提醒投递。该结果不覆盖其他版本、所有排除事件或多效果播放结束时机。首版仍仅支持 V2.1.1，不兼容 V1，也不据此宣称支持所有 V2 版本。下方实现阶段记录保留为历史证据，最新实机结果见文末。
 
 ## 产品边界
 
@@ -218,3 +218,22 @@ xcodebuild -project CueDex.xcodeproj -scheme CueDex \
 固定光效参数并移除设置入口后复跑同一完整测试命令，63 项通过，0 失败、0 跳过；包含「是否启用」中文打包检查。隔离配置的 SwiftUI 截图已核对通用、光效页布局及过时引导文案的移除，不启用真实接入。
 
 最终工程日志：`.build/fixed-glow-tests.log`；结果包：`.build/TestDerivedData/Logs/Test/Test-CueDex-2026.10.21_15-15-51-+0800.xcresult`。截图：`.build/SwiftValidation/fixed-glow-general.png`、`.build/SwiftValidation/fixed-glow-glow.png`。
+
+### 2026-10-21 实机接入结果与安装说明修正
+
+- 用户先确认 OpenCode CLI 可触发提醒，但 OpenChamber 不触发。只读核查发现 OpenChamber 2.5.0 实际运行其内置 2.0.32 后端，与终端中的 2.1.1 是独立服务。受管理插件对 2.0.32 跳过订阅，符合版本保护策略。
+- 用户在 OpenChamber「设置 > OpenChamber 分组 > 通用 > OpenCode CLI」中将可执行文件设为 `/usr/local/bin/opencode` 并执行「保存并重载」。随后 `/health` 报告后端来源为 `settings`、路径为该程序；程序报告版本 2.1.1，运行日志出现 CueDex 插件加载记录，插件与启用令牌的安装代际一致。
+- 在重载后的主会话回复结束后，用户明确确认收到提醒。这是本机 CLI 与该 OpenChamber 配置的真实成功路径证据，不等于所有异常路径、多来源并发或多效果结束时机均已完成实机验收。Codex 其他 Stop hooks 要求继续执行的误报边界仍未解决。
+- 安装说明必须明确：安装 CueDex 不自动启用接入；启用集成会向 `~/.config/opencode/plugins/cuedex.js` 写入全局插件；需在任务结束后重载客户端实际使用的 OpenCode 服务；检测到的 CLI 版本不代表客户端后端版本。「已配置」和效果预览不能作为连接成功证据。
+- 2026-10-22 将这些前提补入中英文 README、通用设置中的插件路径/版本/加载说明及启用确认文案。不改变接入行为、不自动重启服务、不扩大版本支持范围。
+
+### 2026-10-22 接入引导收尾与本机路径修正
+
+- Codex 引导明确区分自动安装与用户信任：CueDex 自动安装 helper 并合并 Stop 钩子，不要求用户手改 JSON；通用设置显示实际 Stop 事件及 helper 命令路径，指引用户在 Codex「设置 > Hooks」查找命令包含 `cuedex-notify` 的条目并检查、信任。不假定 Codex 将条目命名为「CueDex」，不添加未经核实的显示名字段。
+- 启用前与确认时说明必要的信任步骤；未显示钩子时，提示先结束当前任务再重启 Codex，不再错误地指引重启 ChatGPT。明确「已配置」只代表已安装，不能证明已信任或连通，效果预览也不是接入验收。中英文 README 和字符串目录同步更新。
+- 用户授权修正本机 OpenCode 唤醒路径后，先核实正式版为 `/Applications/CueDex.app`（1.0.7），并确认已安装插件除渲染的路径/令牌外与正式版模板一致。旧插件备份至忽略目录 `.build/IntegrationRepair/2026-10-22/cuedex.js.before`，随后仅将 `appBundle` 从旧 Xcode Debug 路径改为正式版路径；其他内容、启用令牌、文件权限均保持不变。JavaScript 语法检查通过，修正报告在同目录 `verification.json`。
+- 正常退出旧 Debug 进程后，现场只剩正式版运行。OpenChamber 运行日志随后出现该插件的实际重新加载记录；没有重启 OpenCode/Codex 服务，没有修改登录项。已安装 Codex helper 的唤醒路径原本即为正式版，故未改动它或真实 hooks.json。
+- 新增隔离回归覆盖中英文 Codex 引导打包、真实生成的 Stop 命令，以及从 Debug 路径重新安装 OpenCode 插件到正式版路径时的模板渲染、旧代际失效及其他插件保留。安装/停用使用临时路径验收，不停用用户正在使用的真实集成。
+- 本轮修正发生在会话执行中途，插件热加载后可能缺少本轮执行起点；依照现有保守策略，不将本轮是否提醒作为连接成败的判断。下一轮新主会话请求的真实提醒、是否仍出现旧 Debug 进程，以及 Codex 中的人工信任与真实完成提醒，仍须实机确认；不将隔离测试或预览冒充这些结果。
+- 收尾工程验证：`xcodebuild -project CueDex.xcodeproj -scheme CueDex -destination 'platform=macOS' -derivedDataPath .build/TestDerivedData CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO test` 通过 **63 项单元测试及 3 项 UI 测试**；`node --test script/opencode_bridge.test.mjs` 通过 **16 项桥接测试**。日志：`.build/integration-guides-tests.log`。测试后复查仍只有 `/Applications/CueDex.app` 正式版进程，插件只有目标路径这一处改动。
+- 使用当前 SwiftUI 源码、隔离的 UserDefaults、只读示例路径及禁用的 runtime services 生成中英文原生表单截图，核对钩子事件/命令、信任指引、插件路径和版本/重载说明无截断。截图采用 660 pt 原生宽度、加长高度展示滚动表单的完整内容，不代表将正式设置窗口改高：`.build/IntegrationGuideCapture/integration-guides-zh-Hans.png`、`.build/IntegrationGuideCapture/integration-guides-en.png`。未启用或停用用户的真实集成，未提交、推送或发布。

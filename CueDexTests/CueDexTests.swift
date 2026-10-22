@@ -209,6 +209,66 @@ struct CueDexTests {
         #expect(localizationBundle.localizedString(forKey: "English", value: nil, table: nil) == "英文")
     }
 
+    @Test func openCodeSetupInstructionsAreBundledInBothLanguages() throws {
+        let instructions = [
+            (
+                "OpenCode reminders require a global plugin. Enable Integration installs it at the path below; installing CueDex alone is not enough.",
+                "OpenCode 提醒依赖全局插件。点击「启用集成」会将插件安装到下方路径；仅安装 CueDex 不会自动生效。"
+            ),
+            (
+                "Requires the actual OpenCode backend to be V2.1.1. OpenChamber may use a different version than the detected CLI.",
+                "实际运行的 OpenCode 后端必须为 V2.1.1。OpenChamber 使用的版本可能与检测到的 CLI 不同。"
+            ),
+            (
+                "After installation, finish active work and reload your client's OpenCode service. CueDex will not restart it. Configured means installed, not connected.",
+                "安装后，请先等当前任务结束，再重载客户端实际使用的 OpenCode 服务。CueDex 不会替你重启。「已配置」仅代表已安装，不代表已连接。"
+            ),
+        ]
+        for language in ["en", "zh-Hans"] {
+            let url = try #require(Bundle.main.url(forResource: language, withExtension: "lproj"))
+            let bundle = try #require(Bundle(url: url))
+            for (english, chinese) in instructions {
+                #expect(
+                    bundle.localizedString(forKey: english, value: "MISSING", table: nil)
+                        == (language == "en" ? english : chinese)
+                )
+            }
+        }
+    }
+
+    @Test func codexSetupInstructionsAreBundledInBothLanguages() throws {
+        let instructions = [
+            (
+                "Enable Integration installs CueDex's Stop hook automatically. No manual hooks.json edits are needed. Other hooks are preserved.",
+                "点击「启用集成」会自动安装 CueDex 的 Stop 钩子，无需手改 hooks.json，并会保留其他钩子。"
+            ),
+            ("Hook event", "钩子事件"),
+            ("Hook command", "钩子命令"),
+            (
+                "After enabling integration, open Settings > Hooks in Codex. Find the Stop hook whose command contains cuedex-notify, then review and trust it. CueDex cannot confirm its trust status.",
+                "启用集成后，请打开 Codex 的「设置 > Hooks」，找到 Stop 事件下命令包含 cuedex-notify 的钩子，检查并信任。CueDex 无法确认其信任状态。"
+            ),
+            (
+                "If the hook is missing, finish active work, restart Codex, and check again. CueDex will not restart it.",
+                "如果未显示钩子，请先等当前任务结束，重启 Codex 后再次检查。CueDex 不会替你重启。"
+            ),
+            (
+                "Configured means installed, not trusted or connected. A cue preview does not verify integration.",
+                "「已配置」仅代表已安装，不代表已信任或已连接。效果预览不能验证接入。"
+            ),
+        ]
+        for language in ["en", "zh-Hans"] {
+            let url = try #require(Bundle.main.url(forResource: language, withExtension: "lproj"))
+            let bundle = try #require(Bundle(url: url))
+            for (english, chinese) in instructions {
+                #expect(
+                    bundle.localizedString(forKey: english, value: "MISSING", table: nil)
+                        == (language == "en" ? english : chinese)
+                )
+            }
+        }
+    }
+
     @Test @MainActor func prerecordedSpeechIsGroupedAndPackaged() throws {
         #expect(
             Set(PrerecordedSpeech.allCases.map(\.rawValue)) == [
@@ -424,6 +484,12 @@ struct CueDexTests {
         #expect(stopGroups.count == 2)
         #expect(sessionGroups.count == 1)
         #expect(root["description"] as? String == "existing")
+        let managedGroup = try #require(stopGroups.last)
+        let managedHandlers = try #require(managedGroup["hooks"] as? [[String: Any]])
+        let handler = try #require(managedHandlers.first)
+        #expect(managedHandlers.count == 1)
+        #expect(handler["command"] as? String == "'\(helperPath)'")
+        #expect(handler["type"] as? String == "command")
     }
 
     @Test func removingStopHookPreservesOtherHandlers() throws {

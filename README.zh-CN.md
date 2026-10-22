@@ -46,7 +46,7 @@
 ## 🔔 功能
 
 - 🎯 通过 Codex `Stop` 生命周期钩子监听主 Agent 完成事件，不会因子 Agent 完成而误报
-- 🔌 可选的 OpenCode V2.1.1 全局插件，Codex / OpenCode 独立保存提醒配置；真实会话验收尚待完成
+- 🔌 可选的 OpenCode V2.1.1 全局插件，Codex / OpenCode 独立保存提醒配置；本机 CLI 和 OpenChamber 2.5.0 的真实提醒已确认
 - 🌈 使用 GPU 渲染单色呼吸光或双色警灯式边缘闪烁，覆盖所有已连接显示器
 - 🎛️ 按来源设置颜色、动画、macOS 提示音和本地音频；提示音与语音均跟随系统音量
 - 🗣️ 通过 Apple 原生 `AVSpeechSynthesizer` 播放自定义文字，并可选择系统说话人
@@ -73,25 +73,46 @@
 
 ## 🔌 连接 Codex
 
-1. 打开 CueDex，选择**通用 > Codex > 启用集成**。
-2. CueDex 会向 `~/.codex/hooks.json` 添加自己的 `Stop` 处理器，不会覆盖其他钩子或已有的 `notify` 命令。
-3. 打开 **Codex 设置 > Hooks**，检查并信任 CueDex 钩子。
-4. 如果没有看到该钩子，请重启 ChatGPT 后再次检查。
+**钩子由 CueDex 自动安装，无需手改 JSON 或复制命令。** 仅安装 CueDex 不会启用集成；Codex 中的信任确认是用户安全授权，不是手动配置步骤。
 
-信任后，CueDex 会常驻菜单栏，并且只在主 Agent 产生新的回复并完成时提醒。
+1. 打开 CueDex，选择**通用 > Codex > 启用集成**，查看目标文件并确认。CueDex 会安装本地辅助程序，并向 `~/.codex/hooks.json` 添加自己的 `Stop` 处理器，保留其他钩子和不属于 CueDex 的 `notify` 命令。如果为 CueDex 设置了 `CODEX_HOME`，钩子文件则位于该目录。
+2. 打开 **Codex 设置 > Hooks**，在 **`Stop` 事件**下，找到命令包含 **`cuedex-notify`** 的那条，检查并信任。当前钩子没有独立显示名称，不要依赖界面出现名为「CueDex」的一行。默认命令指向：
+
+   ```text
+   ~/Library/Application Support/CueDex/bin/cuedex-notify
+   ```
+
+   CueDex 的通用设置也会显示实际的「**钩子事件**」和「**钩子命令**」，方便逐项核对。CueDex 无法确认信任状态，也不会代替用户授予 Codex 钩子信任。
+3. 如果没有看到该钩子，请先等当前任务结束，重启 Codex 后再次检查；CueDex 不会替你重启。
+4. 让**主会话完成一次新请求**，检查 CueDex 的「最近收到完成事件」。「已配置」仅代表钩子已安装，不代表已信任或已连接；「测试 Codex」只是本地效果预览，不能验证接入。
+
+信任且加载后，CueDex 会常驻菜单栏，并且只在主 Agent 产生新的回复并完成时提醒。停用集成只移除 CueDex 自己的钩子，保留其他钩子和已保存的提醒配置。
 
 如果其他 Codex `Stop` 钩子阻止完成并要求继续执行，CueDex 无法保证等到该次继续执行结束后才提醒。
 
 ## 🔌 连接 OpenCode
 
-1. 使用本机 **OpenCode V2.1.1**；此接入暂不支持其他版本、远程服务器、SSH 或容器。
-2. 在 CueDex 中选择**通用 > OpenCode > 启用集成**，确认安装 CueDex 全局插件。无需手改 JSON、配置 MCP 或提供 API Key。
-3. 安装后重新加载 OpenCode；如果插件未加载，可能需要重启其后台服务。请先等正在执行的工作结束；CueDex 不会替你重启。
-4. 在主会话中发起一次新请求，正常完成后检查 CueDex 的「最近收到完成事件」。
+> [!IMPORTANT]
+> **仅安装 CueDex，OpenCode 提醒不会自动生效。** 你需要主动启用集成，将插件安装到 OpenCode 中，再重载客户端实际使用的 OpenCode 服务。无需手改 JSON、配置 MCP 或提供 API Key。
+
+1. 确认**实际运行的本机 OpenCode 后端为 V2.1.1**。此接入暂不支持其他版本、远程服务器、SSH 或容器。CueDex 的「检测到的 CLI 版本」只检查本机可执行文件，不一定是客户端正在使用的后端版本。
+2. 在 CueDex 中选择**通用 > OpenCode > 启用集成**，查看插件路径并确认安装。CueDex 会将受管理的全局插件写入 `~/.config/opencode/plugins/cuedex.js`，作用于本地项目，保留其他插件；停用集成时只移除 CueDex 自己的插件，保留提醒配置。
+3. 等当前任务结束后，重载 CLI 或客户端实际使用的 OpenCode 服务。如果只重载客户端仍未加载插件，请自行重启其 OpenCode 后端。CueDex 不会替你重启工具或服务。
+4. 在**主会话中发起一次新请求**，正常完成后检查 CueDex 的「最近收到完成事件」。「已配置」仅代表插件已安装，不代表事件投递已经验证；「测试 OpenCode」只是本地效果预览，不能验证接入。
+
+### 在 OpenChamber 中使用
+
+即使终端中的 `opencode --version` 显示 2.1.1，OpenChamber 也可能运行自己的内置 OpenCode 后端。本次实际检查的 OpenChamber **2.5.0** 内置后端为 **2.0.32**，CueDex 插件会主动跳过该版本。
+
+1. 在 OpenChamber 中打开**设置 > OpenChamber 分组 > 通用 > OpenCode CLI**。
+2. 将「**OpenCode 可执行文件路径（OpenCode binary path）**」设为已安装的 **2.1.1** 程序的绝对路径。可在终端用 `command -v opencode` 查路径，用 `opencode --version` 核对版本。例如本机为 `/usr/local/bin/opencode`，你的路径可能不同。
+3. 等当前任务结束，点击「**保存并重载（Save + reload）**」，然后让主会话完成一次新请求，确认收到提醒。
+
+实例菜单中的 **Local · 127.0.0.1:…** 是 OpenChamber 的服务地址，不是 OpenCode 程序路径，也不能说明后端版本；不需要通过修改这个地址解决问题。
 
 插件只针对主会话回复成功完成，不提醒子会话、失败、取消或等待授权/输入。插件加载时已在执行的请求会保守跳过。未启用接入也能编辑配置和预览效果；预览按钮不代表连接正常。
 
-**验证边界：** 自动化测试已通过，但真实插件加载、运行中服务兼容性和会话端到端投递尚未完成验收。详见[设计与验证记录](docs/design/opencode-support.md)。
+**验证边界：** 2026-10-21，用户已确认本机 OpenCode CLI 的真实提醒，以及 OpenChamber 2.5.0 切换到 2.1.1 后端并重载后的真实提醒。这不代表支持其他 OpenCode 版本，也不代表多效果播放结束时机及 Codex Stop-hook 边界检查全部完成。详见[设计与验证记录](docs/design/opencode-support.md)。
 
 ## ⚙️ 工作原理
 

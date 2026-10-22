@@ -46,7 +46,7 @@ The recordings show CueDex running around a real macOS Codex workspace. Colors a
 ## 🔔 Features
 
 - 🎯 Main-agent completion events through the Codex `Stop` lifecycle hook; subagent completions are ignored
-- 🔌 Optional OpenCode V2.1.1 global plugin, with independent Codex/OpenCode cue profiles; real-session acceptance testing is still pending
+- 🔌 Optional OpenCode V2.1.1 global plugin, with independent Codex/OpenCode cue profiles; real reminders confirmed in the local CLI and OpenChamber 2.5.0
 - 🌈 GPU-driven monochrome breathing glow or two-color emergency-style edge flash across every connected display
 - 🎛️ Per-source colors, animations, macOS sounds, and imported audio; sound and speech follow system volume
 - 🗣️ Custom spoken messages and system voices through Apple's native `AVSpeechSynthesizer`
@@ -74,25 +74,46 @@ Every Release includes a SHA-256 file for verifying download integrity.
 
 ## 🔌 Connect to Codex
 
-1. Open CueDex and select **General > Codex > Enable Integration**.
-2. CueDex adds its `Stop` handler to `~/.codex/hooks.json` without replacing other hooks or an existing `notify` command.
-3. Open **Codex Settings > Hooks** and review and trust the CueDex hook.
-4. If the hook does not appear, restart ChatGPT and check again.
+**CueDex installs the hook for you; you do not need to edit JSON or copy a command manually.** Installing CueDex alone does not enable the integration. Codex's trust confirmation is a separate user action, not a manual configuration step.
 
-Once trusted, CueDex stays in the menu bar and responds only when the main agent finishes with a new assistant message.
+1. Open CueDex and select **General > Codex > Enable Integration**. Review the target file and confirm. CueDex installs its local helper and adds its `Stop` handler to `~/.codex/hooks.json`, preserving other hooks and any unrelated `notify` command. If `CODEX_HOME` is set for CueDex, the hooks file is under that directory instead.
+2. Open **Codex Settings > Hooks**. Look under the **`Stop` event** for the command containing **`cuedex-notify`**, then review and trust it. The current hook has no separate display name; do not rely on seeing a row named “CueDex”. Its default command points to:
+
+   ```text
+   ~/Library/Application Support/CueDex/bin/cuedex-notify
+   ```
+
+   CueDex also displays the actual **Hook event** and **Hook command** in General settings so you can match them. It cannot confirm or grant Codex's hook trust on your behalf.
+3. If the hook is missing, finish active work, restart Codex, and check again. CueDex does not restart Codex for you.
+4. Complete a **new main-session request** and check **Last completion received** in CueDex. **Configured** means the hook is installed, not that it is trusted or connected. **Test Codex** only previews local effects and is not an integration test.
+
+Once trusted and loaded, CueDex stays in the menu bar and responds only when the main agent finishes with a new assistant message. Disabling integration removes CueDex's own hook while preserving other hooks and your saved cue settings.
 
 If another Codex `Stop` hook blocks completion and asks the agent to continue, CueDex cannot guarantee that its cue waits for that continuation.
 
 ## 🔌 Connect to OpenCode
 
-1. Use local **OpenCode V2.1.1**. Other versions, remote servers, SSH, and containers are not supported by this integration.
-2. In CueDex, select **General > OpenCode > Enable Integration** and confirm installation of CueDex's global plugin. No manual JSON edits, MCP setup, or API keys are required.
-3. Reload OpenCode after installation; if the plugin does not load, its background service may need restarting. Finish active work before doing so. CueDex does not restart it for you.
-4. Start a new request in a main session, let it finish successfully, and check **Last completion received** in CueDex.
+> [!IMPORTANT]
+> **Installing CueDex alone does not enable OpenCode reminders.** You must explicitly enable the integration, which installs a plugin into OpenCode, then reload the OpenCode service used by your client. No manual JSON edits, MCP setup, or API keys are required.
+
+1. Make sure the **actual local OpenCode backend is V2.1.1**. Other versions, remote servers, SSH, and containers are not supported. CueDex's **Detected CLI version** checks a local executable, not necessarily the backend your client uses.
+2. In CueDex, select **General > OpenCode > Enable Integration**. Review the plugin path and confirm installation. CueDex writes its managed global plugin to `~/.config/opencode/plugins/cuedex.js`, applying to local projects. It preserves other plugins; disabling integration removes only CueDex's managed plugin and preserves your cue settings.
+3. Finish active work, then reload the OpenCode service used by your CLI or client. If reloading the client does not load the plugin, restart its OpenCode backend yourself. CueDex does not restart tools or services for you.
+4. Start a **new request in a main session**, let it finish successfully, and check **Last completion received** in CueDex. **Configured** only means the plugin is installed, not that event delivery has been verified. **Test OpenCode** previews effects locally; it does not test the integration.
+
+### Using OpenChamber
+
+OpenChamber can run its own bundled OpenCode backend, even when `opencode --version` in Terminal reports 2.1.1. In the observed OpenChamber **2.5.0** installation, the bundled backend was **2.0.32**, which CueDex's plugin deliberately skips.
+
+1. In OpenChamber, open **Settings > OpenChamber > General > OpenCode CLI**.
+2. Set **OpenCode binary path** to the absolute path of your installed **2.1.1** executable. Use `command -v opencode` in Terminal to find it and `opencode --version` to check its version. For example, this machine uses `/usr/local/bin/opencode`; your path may differ.
+3. Finish active work and click **Save + reload**, then complete a new main-session request to verify the reminder.
+
+The instance selector's **Local · 127.0.0.1:…** address identifies the OpenChamber server, not the OpenCode executable or its version. Changing that address is not the fix.
 
 The plugin targets successful main-session responses, not child sessions, failures, cancellations, or permission/input waits. A request already running when the plugin loads is deliberately skipped. Cue settings remain editable when integration is disabled, and preview buttons do not verify connectivity.
 
-**Validation boundary:** automated tests pass, but real plugin loading, service compatibility, and end-to-end session delivery have not yet been accepted. See [the design and verification record](docs/design/opencode-support.md).
+**Validation boundary:** on October 21, 2026, the user confirmed real reminders from the local OpenCode CLI and, after switching its backend to 2.1.1 and reloading, OpenChamber 2.5.0. This does not establish support for other OpenCode versions or complete all multi-effect timing and Codex Stop-hook boundary checks. See [the design and verification record](docs/design/opencode-support.md).
 
 ## ⚙️ How It Works
 

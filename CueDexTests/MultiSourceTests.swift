@@ -441,6 +441,45 @@ struct MultiSourceTests {
         #expect(try String(contentsOf: other, encoding: .utf8) == "other plugin")
     }
 
+    @Test @MainActor func openCodeReinstallUpdatesWakeTargetAndInvalidatesOldGeneration() async throws {
+        let manager = FileManager.default
+        let root = manager.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? manager.removeItem(at: root) }
+        let support = root.appending(path: "Support with spaces")
+        let configuration = root.appending(path: "opencode")
+        let debugPaths = CueDexPaths(
+            applicationSupport: support, codexHome: root.appending(path: "codex"),
+            appBundle: root.appending(path: "Debug/CueDex.app"),
+            opencodeConfigurationDirectory: configuration
+        )
+        let otherPlugin = configuration.appending(path: "plugins/other.js")
+        try manager.createDirectory(at: otherPlugin.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try "user plugin".write(to: otherPlugin, atomically: true, encoding: .utf8)
+        let debugInstaller = OpenCodeIntegrationInstaller(paths: debugPaths, versionProvider: { "2.1.1" })
+        await debugInstaller.install()
+        #expect(debugInstaller.isInstalled)
+        let oldGeneration = try String(contentsOf: debugPaths.opencodeGateURL, encoding: .utf8)
+
+        let releasePaths = CueDexPaths(
+            applicationSupport: support, codexHome: debugPaths.codexHome,
+            appBundle: root.appending(path: "Applications/CueDex.app"),
+            opencodeConfigurationDirectory: configuration
+        )
+        let releaseInstaller = OpenCodeIntegrationInstaller(paths: releasePaths, versionProvider: { "2.1.1" })
+        await releaseInstaller.install()
+        #expect(releaseInstaller.isInstalled)
+        #expect(releaseInstaller.lastError == nil)
+        let generation = try String(contentsOf: releasePaths.opencodeGateURL, encoding: .utf8)
+        #expect(generation != oldGeneration)
+        let templateURL = try #require(Bundle.main.url(forResource: "cuedex-opencode", withExtension: "js"))
+        let template = try String(contentsOf: templateURL, encoding: .utf8)
+        #expect(
+            try String(contentsOf: releasePaths.opencodePluginURL, encoding: .utf8)
+                == OpenCodeIntegrationInstaller.render(template, paths: releasePaths, generation: generation)
+        )
+        #expect(try String(contentsOf: otherPlugin, encoding: .utf8) == "user plugin")
+    }
+
     @Test @MainActor func openCodeInstallerRejectsUnsupportedVersionsAndForeignFiles() async throws {
         let manager = FileManager.default
         let root = manager.temporaryDirectory.appending(path: UUID().uuidString)

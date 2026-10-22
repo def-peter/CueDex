@@ -65,9 +65,15 @@ struct GeneralSettingsView: View {
             if actionSource == .codex {
                 Text("Only CueDex's Stop hook is added or removed. Other hooks and saved cue settings are preserved.")
                 Text(verbatim: integration.paths.codexHooksURL.path)
+                if actionEnablesIntegration {
+                    Text("After enabling integration, open Settings > Hooks in Codex. Find the Stop hook whose command contains cuedex-notify, then review and trust it. CueDex cannot confirm its trust status.")
+                }
             } else {
                 Text("Only CueDex's global plugin is added or removed. It applies to local projects. Other plugins and saved cue settings are preserved.")
                 Text(verbatim: model.opencodeIntegration.paths.opencodePluginURL.path)
+                if actionEnablesIntegration {
+                    Text("After installation, finish active work and reload your client's OpenCode service. CueDex will not restart it. Configured means installed, not connected.")
+                }
             }
         }
     }
@@ -75,6 +81,24 @@ struct GeneralSettingsView: View {
     @ViewBuilder
     private func integrationSection(_ source: AttentionSource) -> some View {
         Section {
+            if source == .codex {
+                Text("Enable Integration installs CueDex's Stop hook automatically. No manual hooks.json edits are needed. Other hooks are preserved.")
+                    .font(.caption).foregroundStyle(.secondary)
+                LabeledContent("Hook event") {
+                    Text(verbatim: "Stop").foregroundStyle(.secondary)
+                }
+                LabeledContent("Hook command") {
+                    Text(verbatim: integration.paths.helperURL.path)
+                        .font(.caption).foregroundStyle(.secondary)
+                        .textSelection(.enabled)
+                }
+            } else {
+                Text("OpenCode reminders require a global plugin. Enable Integration installs it at the path below; installing CueDex alone is not enough.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text(verbatim: model.opencodeIntegration.paths.opencodePluginURL.path)
+                    .font(.caption).foregroundStyle(.secondary)
+                    .textSelection(.enabled)
+            }
             LabeledContent("Integration") {
                 if source == .codex {
                     Text(LocalizedStringKey(integration.status.title)).foregroundStyle(.secondary)
@@ -98,8 +122,12 @@ struct GeneralSettingsView: View {
             }
             .disabled(source == .opencode && model.opencodeIntegration.isCheckingVersion)
 
-            if source == .codex && integration.isInstalled {
-                Text("Open Settings > Hooks in Codex to review and trust CueDex. If CueDex does not appear, restart ChatGPT and try again.")
+            if source == .codex {
+                Text("After enabling integration, open Settings > Hooks in Codex. Find the Stop hook whose command contains cuedex-notify, then review and trust it. CueDex cannot confirm its trust status.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("If the hook is missing, finish active work, restart Codex, and check again. CueDex will not restart it.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("Configured means installed, not trusted or connected. A cue preview does not verify integration.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             if source == .opencode {
@@ -107,7 +135,9 @@ struct GeneralSettingsView: View {
                     Text(verbatim: model.opencodeIntegration.detectedVersion ?? "—")
                         .foregroundStyle(.secondary)
                 }
-                Text("Requires OpenCode V2.1.1. Global plugin changes may require reloading OpenCode. CueDex will not restart it.")
+                Text("Requires the actual OpenCode backend to be V2.1.1. OpenChamber may use a different version than the detected CLI.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Text("After installation, finish active work and reload your client's OpenCode service. CueDex will not restart it. Configured means installed, not connected.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             if let error = source == .codex ? integration.lastError : model.opencodeIntegration.lastError {

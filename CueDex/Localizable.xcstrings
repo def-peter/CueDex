@@ -11,6 +11,38 @@
         }
       }
     },
+    "After installation, finish active work and reload your client's OpenCode service. CueDex will not restart it. Configured means installed, not connected." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After installation, finish active work and reload your client's OpenCode service. CueDex will not restart it. Configured means installed, not connected."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "安装后，请先等当前任务结束，再重载客户端实际使用的 OpenCode 服务。CueDex 不会替你重启。「已配置」仅代表已安装，不代表已连接。"
+          }
+        }
+      }
+    },
+    "After enabling integration, open Settings > Hooks in Codex. Find the Stop hook whose command contains cuedex-notify, then review and trust it. CueDex cannot confirm its trust status." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "After enabling integration, open Settings > Hooks in Codex. Find the Stop hook whose command contains cuedex-notify, then review and trust it. CueDex cannot confirm its trust status."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "启用集成后，请打开 Codex 的「设置 > Hooks」，找到 Stop 事件下命令包含 cuedex-notify 的钩子，检查并信任。CueDex 无法确认其信任状态。"
+          }
+        }
+      }
+    },
     "Appearance" : {
       "localizations" : {
         "zh-Hans" : {
@@ -341,6 +373,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "光效模式"
+          }
+        }
+      }
+    },
+    "Enable Integration installs CueDex's Stop hook automatically. No manual hooks.json edits are needed. Other hooks are preserved." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enable Integration installs CueDex's Stop hook automatically. No manual hooks.json edits are needed. Other hooks are preserved."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "点击「启用集成」会自动安装 CueDex 的 Stop 钩子，无需手改 hooks.json，并会保留其他钩子。"
           }
         }
       }
@@ -676,12 +724,66 @@
         }
       }
     },
-    "Open Settings > Hooks in Codex to review and trust CueDex. If CueDex does not appear, restart ChatGPT and try again." : {
+    "Configured means installed, not trusted or connected. A cue preview does not verify integration." : {
       "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Configured means installed, not trusted or connected. A cue preview does not verify integration."
+          }
+        },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "请前往 Codex 的“设置 > 钩子”审核并信任 CueDex；如果未显示 CueDex，请重启 ChatGPT 后重试。"
+            "value" : "「已配置」仅代表已安装，不代表已信任或已连接。效果预览不能验证接入。"
+          }
+        }
+      }
+    },
+    "Hook command" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hook command"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "钩子命令"
+          }
+        }
+      }
+    },
+    "Hook event" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hook event"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "钩子事件"
+          }
+        }
+      }
+    },
+    "If the hook is missing, finish active work, restart Codex, and check again. CueDex will not restart it." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If the hook is missing, finish active work, restart Codex, and check again. CueDex will not restart it."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "如果未显示钩子，请先等当前任务结束，重启 Codex 后再次检查。CueDex 不会替你重启。"
           }
         }
       }
@@ -800,18 +902,34 @@
         }
       }
     },
-    "Requires OpenCode V2.1.1. Global plugin changes may require reloading OpenCode. CueDex will not restart it." : {
+    "OpenCode reminders require a global plugin. Enable Integration installs it at the path below; installing CueDex alone is not enough." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Requires OpenCode V2.1.1. Global plugin changes may require reloading OpenCode. CueDex will not restart it."
+            "value" : "OpenCode reminders require a global plugin. Enable Integration installs it at the path below; installing CueDex alone is not enough."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "需要 OpenCode V2.1.1。全局插件变更可能需要重新加载 OpenCode，CueDex 不会自动重启它。"
+            "value" : "OpenCode 提醒依赖全局插件。点击「启用集成」会将插件安装到下方路径；仅安装 CueDex 不会自动生效。"
+          }
+        }
+      }
+    },
+    "Requires the actual OpenCode backend to be V2.1.1. OpenChamber may use a different version than the detected CLI." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Requires the actual OpenCode backend to be V2.1.1. OpenChamber may use a different version than the detected CLI."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "实际运行的 OpenCode 后端必须为 V2.1.1。OpenChamber 使用的版本可能与检测到的 CLI 不同。"
           }
         }
       }
