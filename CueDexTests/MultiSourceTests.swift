@@ -480,6 +480,144 @@ struct MultiSourceTests {
         #expect(try String(contentsOf: otherPlugin, encoding: .utf8) == "user plugin")
     }
 
+    @Test @MainActor func openCodeVersionNoticesDistinguishMissingCLIFromUnsupportedVersion() async throws {
+        let manager = FileManager.default
+        let root = manager.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? manager.removeItem(at: root) }
+        let paths = CueDexPaths(
+            applicationSupport: root.appending(path: "support"),
+            codexHome: root.appending(path: "codex"), appBundle: root,
+            opencodeConfigurationDirectory: root.appending(path: "opencode")
+        )
+        let unverified = OpenCodeIntegrationInstaller(paths: paths, versionProvider: { "3.0.0" })
+        await unverified.install()
+        #expect(unverified.detectedVersion == "3.0.0")
+        #expect(unverified.compatibilityNotice == "The detected OpenCode version is outside the supported range. CueDex supports stable OpenCode 2.x (>= 2.1.1, < 3.0.0), so installation was not performed.")
+        #expect(unverified.lastError == nil)
+        #expect(!unverified.isInstalled)
+        #expect(!manager.fileExists(atPath: paths.opencodePluginURL.path))
+        #expect(!manager.fileExists(atPath: paths.opencodeGateURL.path))
+
+        let missing = OpenCodeIntegrationInstaller(paths: paths, versionProvider: { nil })
+        await missing.install()
+        #expect(missing.compatibilityNotice == "OpenCode CLI was not detected, so installation was not performed.")
+        #expect(missing.lastError == nil)
+        #expect(!missing.isInstalled)
+        #expect(!manager.fileExists(atPath: paths.opencodePluginURL.path))
+        #expect(!manager.fileExists(atPath: paths.opencodeGateURL.path))
+
+        await unverified.checkVersion()
+        #expect(unverified.compatibilityNotice == nil)
+        await missing.install()
+        missing.uninstall()
+        #expect(missing.compatibilityNotice == nil)
+    }
+
+    @Test @MainActor func versionNoticeDoesNotRemoveAnExistingOpenCodeIntegration() async throws {
+        let manager = FileManager.default
+        let root = manager.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? manager.removeItem(at: root) }
+        let paths = CueDexPaths(
+            applicationSupport: root.appending(path: "support"),
+            codexHome: root.appending(path: "codex"), appBundle: root,
+            opencodeConfigurationDirectory: root.appending(path: "opencode")
+        )
+        let supported = OpenCodeIntegrationInstaller(paths: paths, versionProvider: { "2.1.1" })
+        await supported.install()
+        #expect(supported.isInstalled)
+        #expect(supported.lastError == nil)
+        #expect(supported.compatibilityNotice == nil)
+        let originalPlugin = try Data(contentsOf: paths.opencodePluginURL)
+        let originalGate = try Data(contentsOf: paths.opencodeGateURL)
+
+        let unverified = OpenCodeIntegrationInstaller(paths: paths, versionProvider: { "3.0.0" })
+        await unverified.install()
+        #expect(unverified.isInstalled)
+        #expect(unverified.compatibilityNotice != nil)
+        #expect(unverified.lastError == nil)
+        #expect(try Data(contentsOf: paths.opencodePluginURL) == originalPlugin)
+        #expect(try Data(contentsOf: paths.opencodeGateURL) == originalGate)
+    }
+
+    @Test func openCodeVersionRangeAcceptsStableV2Upgrades() {
+        for version in ["2.1.1", "2.1.2", "2.1.3", "2.1.10", "2.2.0", "2.10.0", "v2.1.3", "2.1.3+build.1"] {
+            #expect(OpenCodeIntegrationInstaller.supportsVersion(version))
+        }
+        let rejected: [String?] = [nil, "", "1.9.0", "2.0.32", "2.1.0", "3.0.0", "v3.1.1", "2.1.3-beta.1", "2.2.0-rc.1+build", "2.1", "2.01.3", "2.1.03", "2.1.3junk", "2.1.3\n", " 2.1.3", "2.1.3+", "2.1.3+foo..bar", "2.1.9007199254740992"]
+        for version in rejected {
+            #expect(!OpenCodeIntegrationInstaller.supportsVersion(version))
+        }
+    }
+
+    @Test @MainActor func openCodeInstallerAcceptsNewStableReleases() async throws {
+        let manager = FileManager.default
+        let root = manager.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? manager.removeItem(at: root) }
+        let paths = CueDexPaths(
+            applicationSupport: root.appending(path: "support"),
+            codexHome: root.appending(path: "codex"), appBundle: root,
+            opencodeConfigurationDirectory: root.appending(path: "opencode")
+        )
+        for version in ["2.1.1", "2.1.3", "v2.1.3", "2.1.10", "2.2.0"] {
+            let installer = OpenCodeIntegrationInstaller(paths: paths, versionProvider: { version })
+            await installer.install()
+            #expect(installer.isInstalled)
+            #expect(installer.lastError == nil)
+            #expect(installer.compatibilityNotice == nil)
+            let installed = try String(contentsOf: paths.opencodePluginURL, encoding: .utf8)
+            #expect(installed.contains("supportsVersion(ctx?.app?.version)"))
+            installer.uninstall()
+            #expect(!manager.fileExists(atPath: paths.opencodePluginURL.path))
+            #expect(!manager.fileExists(atPath: paths.opencodeGateURL.path))
+        }
+    }
+
+    @Test @MainActor func refreshingOpenCodeBridgeMigratesOnlyEnabledManagedFiles() throws {
+        let manager = FileManager.default
+        let root = manager.temporaryDirectory.appending(path: UUID().uuidString)
+        defer { try? manager.removeItem(at: root) }
+        let paths = CueDexPaths(
+            applicationSupport: root.appending(path: "support"),
+            codexHome: root.appending(path: "codex"), appBundle: root.appending(path: "Applications/CueDex.app"),
+            opencodeConfigurationDirectory: root.appending(path: "opencode")
+        )
+        let installer = OpenCodeIntegrationInstaller(paths: paths, versionProvider: { nil })
+        installer.refreshPluginIfInstalled()
+        #expect(!manager.fileExists(atPath: paths.opencodePluginURL.path))
+        #expect(!manager.fileExists(atPath: paths.opencodeGateURL.path))
+
+        try manager.createDirectory(at: paths.opencodePluginURL.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try manager.createDirectory(at: paths.applicationSupport, withIntermediateDirectories: true)
+        try "generation".write(to: paths.opencodeGateURL, atomically: true, encoding: .utf8)
+        try "user-owned".write(to: paths.opencodePluginURL, atomically: true, encoding: .utf8)
+        installer.refreshPluginIfInstalled()
+        #expect(try String(contentsOf: paths.opencodePluginURL, encoding: .utf8) == "user-owned")
+
+        let legacy = "// CueDex managed OpenCode V2 bridge.\nconst appBundle = '/Debug/CueDex.app';"
+        try legacy.write(to: paths.opencodePluginURL, atomically: true, encoding: .utf8)
+        try manager.removeItem(at: paths.opencodeGateURL)
+        installer.refreshPluginIfInstalled()
+        #expect(try String(contentsOf: paths.opencodePluginURL, encoding: .utf8) == legacy)
+        #expect(!manager.fileExists(atPath: paths.opencodeGateURL.path))
+
+        try "generation".write(to: paths.opencodeGateURL, atomically: true, encoding: .utf8)
+        installer.refreshPluginIfInstalled()
+        #expect(installer.isInstalled)
+        #expect(installer.lastError == nil)
+        let installed = try String(contentsOf: paths.opencodePluginURL, encoding: .utf8)
+        #expect(installed.contains("supportsVersion(ctx?.app?.version)"))
+        #expect(!installed.contains("/Debug/"))
+        #expect(try String(contentsOf: paths.opencodeGateURL, encoding: .utf8) == "generation")
+        let attributes = try manager.attributesOfItem(atPath: paths.opencodePluginURL.path)
+        #expect((attributes[.posixPermissions] as? NSNumber)?.intValue == 0o600)
+        let marker = Date(timeIntervalSince1970: 1_000)
+        try manager.setAttributes([.modificationDate: marker], ofItemAtPath: paths.opencodePluginURL.path)
+        installer.refreshPluginIfInstalled()
+        let unchanged = try manager.attributesOfItem(atPath: paths.opencodePluginURL.path)
+        #expect(unchanged[.modificationDate] as? Date == marker)
+        #expect(try String(contentsOf: paths.opencodePluginURL, encoding: .utf8) == installed)
+    }
+
     @Test @MainActor func openCodeInstallerRejectsUnsupportedVersionsAndForeignFiles() async throws {
         let manager = FileManager.default
         let root = manager.temporaryDirectory.appending(path: UUID().uuidString)
@@ -488,12 +626,14 @@ struct MultiSourceTests {
         let unsupported = OpenCodeIntegrationInstaller(paths: paths, versionProvider: { "1.0.0" })
         await unsupported.install()
         #expect(!manager.fileExists(atPath: paths.opencodePluginURL.path))
-        #expect(unsupported.lastError != nil)
+        #expect(unsupported.lastError == nil)
+        #expect(unsupported.compatibilityNotice != nil)
         try manager.createDirectory(at: paths.opencodePluginURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try "user-owned".write(to: paths.opencodePluginURL, atomically: true, encoding: .utf8)
         let installer = OpenCodeIntegrationInstaller(paths: paths, versionProvider: { "2.1.1" }, pluginTemplate: { "unused" })
         await installer.install()
         #expect(installer.lastError != nil)
+        #expect(installer.compatibilityNotice == nil)
         installer.uninstall()
         #expect(try String(contentsOf: paths.opencodePluginURL, encoding: .utf8) == "user-owned")
     }

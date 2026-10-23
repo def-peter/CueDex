@@ -46,7 +46,7 @@ The recordings show CueDex running around a real macOS Codex workspace. Colors a
 ## 🔔 Features
 
 - 🎯 Main-agent completion events through the Codex `Stop` lifecycle hook; subagent completions are ignored
-- 🔌 Optional OpenCode V2.1.1 global plugin, with independent Codex/OpenCode cue profiles; real reminders confirmed in the local CLI and OpenChamber 2.5.0
+- 🔌 Optional global plugin for stable OpenCode 2.x (>= 2.1.1, < 3.0.0), with independent Codex/OpenCode cue profiles; real reminders confirmed in the local CLI and OpenChamber 2.5.0 on 2.1.1
 - 🌈 GPU-driven monochrome breathing glow or two-color emergency-style edge flash across every connected display
 - 🎛️ Per-source colors, animations, macOS sounds, and imported audio; sound and speech follow system volume
 - 🗣️ Custom spoken messages and system voices through Apple's native `AVSpeechSynthesizer`
@@ -96,24 +96,26 @@ If another Codex `Stop` hook blocks completion and asks the agent to continue, C
 > [!IMPORTANT]
 > **Installing CueDex alone does not enable OpenCode reminders.** You must explicitly enable the integration, which installs a plugin into OpenCode, then reload the OpenCode service used by your client. No manual JSON edits, MCP setup, or API keys are required.
 
-1. Make sure the **actual local OpenCode backend is V2.1.1**. Other versions, remote servers, SSH, and containers are not supported. CueDex's **Detected CLI version** checks a local executable, not necessarily the backend your client uses.
+1. Make sure the **actual local OpenCode backend is a supported stable 2.x release (>= 2.1.1 and < 3.0.0)**. Prereleases, versions outside this range, remote servers, SSH, and containers are not supported. CueDex's **Detected CLI version** checks a local executable, not necessarily the backend your client uses.
 2. In CueDex, select **General > OpenCode > Enable Integration**. Review the plugin path and confirm installation. CueDex writes its managed global plugin to `~/.config/opencode/plugins/cuedex.js`, applying to local projects. It preserves other plugins; disabling integration removes only CueDex's managed plugin and preserves your cue settings.
 3. Finish active work, then reload the OpenCode service used by your CLI or client. If reloading the client does not load the plugin, restart its OpenCode backend yourself. CueDex does not restart tools or services for you.
 4. Start a **new request in a main session**, let it finish successfully, and check **Last completion received** in CueDex. **Configured** only means the plugin is installed, not that event delivery has been verified. **Test OpenCode** previews effects locally; it does not test the integration.
 
+**Updating an existing integration:** When launched, release builds of CueDex automatically refresh an already-enabled managed OpenCode plugin to the latest bridge template while preserving the existing installation generation. CueDex does not auto-enable integration, never touches unowned files, and skips writing when the script is unchanged. If writing the file triggers an OpenCode plugin reload during an active request, that in-flight turn may skip reminding. After upgrading OpenCode, finish active work and reload its service so the updated bridge takes effect.
+
 ### Using OpenChamber
 
-OpenChamber can run its own bundled OpenCode backend, even when `opencode --version` in Terminal reports 2.1.1. In the observed OpenChamber **2.5.0** installation, the bundled backend was **2.0.32**, which CueDex's plugin deliberately skips.
+OpenChamber can run its own bundled OpenCode backend, even when `opencode --version` in Terminal reports a supported 2.x version. In the observed OpenChamber **2.5.0** installation, the bundled backend was **2.0.32**, which CueDex's plugin deliberately skips.
 
 1. In OpenChamber, open **Settings > OpenChamber > General > OpenCode CLI**.
-2. Set **OpenCode binary path** to the absolute path of your installed **2.1.1** executable. Use `command -v opencode` in Terminal to find it and `opencode --version` to check its version. For example, this machine uses `/usr/local/bin/opencode`; your path may differ.
+2. Set **OpenCode binary path** to the absolute path of your installed **supported 2.x (>= 2.1.1)** executable. Use `command -v opencode` in Terminal to find it and `opencode --version` to check its version. For example, this machine uses `/usr/local/bin/opencode`; your path may differ.
 3. Finish active work and click **Save + reload**, then complete a new main-session request to verify the reminder.
 
 The instance selector's **Local · 127.0.0.1:…** address identifies the OpenChamber server, not the OpenCode executable or its version. Changing that address is not the fix.
 
 The plugin targets successful main-session responses, not child sessions, failures, cancellations, or permission/input waits. A request already running when the plugin loads is deliberately skipped. Cue settings remain editable when integration is disabled, and preview buttons do not verify connectivity.
 
-**Validation boundary:** on October 21, 2026, the user confirmed real reminders from the local OpenCode CLI and, after switching its backend to 2.1.1 and reloading, OpenChamber 2.5.0. This does not establish support for other OpenCode versions or complete all multi-effect timing and Codex Stop-hook boundary checks. See [the design and verification record](docs/design/opencode-support.md).
+**Validation boundary:** on October 21, 2026, the user confirmed real reminders from the local OpenCode CLI and, after switching its backend to 2.1.1 and reloading, OpenChamber 2.5.0. Static verification of npm packages 2.1.1 and 2.1.3 confirmed plugin, session, and event compatibility, but real user sessions on 2.1.3 have not yet undergone live acceptance testing. This does not establish support for versions outside stable 2.x (>= 2.1.1, < 3.0.0) or complete all multi-effect timing and Codex Stop-hook boundary checks. See [the design and verification record](docs/design/opencode-support.md).
 
 ## ⚙️ How It Works
 

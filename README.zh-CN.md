@@ -46,7 +46,7 @@
 ## 🔔 功能
 
 - 🎯 通过 Codex `Stop` 生命周期钩子监听主 Agent 完成事件，不会因子 Agent 完成而误报
-- 🔌 可选的 OpenCode V2.1.1 全局插件，Codex / OpenCode 独立保存提醒配置；本机 CLI 和 OpenChamber 2.5.0 的真实提醒已确认
+- 🔌 可选的 OpenCode 2.x（>= 2.1.1 且 < 3.0.0）稳定版全局插件，Codex / OpenCode 独立保存提醒配置；已在 2.1.1 下确认本机 CLI 和 OpenChamber 2.5.0 的真实提醒
 - 🌈 使用 GPU 渲染单色呼吸光或双色警灯式边缘闪烁，覆盖所有已连接显示器
 - 🎛️ 按来源设置颜色、动画、macOS 提示音和本地音频；提示音与语音均跟随系统音量
 - 🗣️ 通过 Apple 原生 `AVSpeechSynthesizer` 播放自定义文字，并可选择系统说话人
@@ -95,24 +95,26 @@
 > [!IMPORTANT]
 > **仅安装 CueDex，OpenCode 提醒不会自动生效。** 你需要主动启用集成，将插件安装到 OpenCode 中，再重载客户端实际使用的 OpenCode 服务。无需手改 JSON、配置 MCP 或提供 API Key。
 
-1. 确认**实际运行的本机 OpenCode 后端为 V2.1.1**。此接入暂不支持其他版本、远程服务器、SSH 或容器。CueDex 的「检测到的 CLI 版本」只检查本机可执行文件，不一定是客户端正在使用的后端版本。
+1. 确认**实际运行的本机 OpenCode 后端在受支持的 2.x 稳定版范围（>= 2.1.1 且 < 3.0.0）内**。预发布版本、该范围外的其他版本、远程服务器、SSH 或容器均不受支持。CueDex 的「检测到的 CLI 版本」只检查本机可执行文件，不一定是客户端正在使用的后端版本。
 2. 在 CueDex 中选择**通用 > OpenCode > 启用集成**，查看插件路径并确认安装。CueDex 会将受管理的全局插件写入 `~/.config/opencode/plugins/cuedex.js`，作用于本地项目，保留其他插件；停用集成时只移除 CueDex 自己的插件，保留提醒配置。
 3. 等当前任务结束后，重载 CLI 或客户端实际使用的 OpenCode 服务。如果只重载客户端仍未加载插件，请自行重启其 OpenCode 后端。CueDex 不会替你重启工具或服务。
 4. 在**主会话中发起一次新请求**，正常完成后检查 CueDex 的「最近收到完成事件」。「已配置」仅代表插件已安装，不代表事件投递已经验证；「测试 OpenCode」只是本地效果预览，不能验证接入。
 
+**更新已有集成：** 正式版 CueDex 启动时会自动将已启用的受管理 OpenCode 插件刷新至最新模板，并保留原有的安装代际标记。应用不会替未启用的环境自动开启接入，绝不改动非 CueDex 管理的文件，脚本一致时跳过写盘。若文件写盘触发了 OpenCode 重新加载插件，正在进行的当前轮次可能会跳过提醒；当 OpenCode 完成升级后，请等当前任务结束并重载其实际使用的服务，以加载最新的桥接脚本。
+
 ### 在 OpenChamber 中使用
 
-即使终端中的 `opencode --version` 显示 2.1.1，OpenChamber 也可能运行自己的内置 OpenCode 后端。本次实际检查的 OpenChamber **2.5.0** 内置后端为 **2.0.32**，CueDex 插件会主动跳过该版本。
+即使终端中的 `opencode --version` 显示支持的版本，OpenChamber 也可能运行自己的内置 OpenCode 后端。本次实际检查的 OpenChamber **2.5.0** 内置后端为 **2.0.32**，CueDex 插件会主动跳过该版本。
 
 1. 在 OpenChamber 中打开**设置 > OpenChamber 分组 > 通用 > OpenCode CLI**。
-2. 将「**OpenCode 可执行文件路径（OpenCode binary path）**」设为已安装的 **2.1.1** 程序的绝对路径。可在终端用 `command -v opencode` 查路径，用 `opencode --version` 核对版本。例如本机为 `/usr/local/bin/opencode`，你的路径可能不同。
+2. 将「**OpenCode 可执行文件路径（OpenCode binary path）**」设为已安装的受支持 2.x（>= 2.1.1）程序的绝对路径。可在终端用 `command -v opencode` 查路径，用 `opencode --version` 核对版本。例如本机为 `/usr/local/bin/opencode`，你的路径可能不同。
 3. 等当前任务结束，点击「**保存并重载（Save + reload）**」，然后让主会话完成一次新请求，确认收到提醒。
 
 实例菜单中的 **Local · 127.0.0.1:…** 是 OpenChamber 的服务地址，不是 OpenCode 程序路径，也不能说明后端版本；不需要通过修改这个地址解决问题。
 
 插件只针对主会话回复成功完成，不提醒子会话、失败、取消或等待授权/输入。插件加载时已在执行的请求会保守跳过。未启用接入也能编辑配置和预览效果；预览按钮不代表连接正常。
 
-**验证边界：** 2026-10-21，用户已确认本机 OpenCode CLI 的真实提醒，以及 OpenChamber 2.5.0 切换到 2.1.1 后端并重载后的真实提醒。这不代表支持其他 OpenCode 版本，也不代表多效果播放结束时机及 Codex Stop-hook 边界检查全部完成。详见[设计与验证记录](docs/design/opencode-support.md)。
+**验证边界：** 2026-10-21，用户已确认本机 OpenCode CLI 的真实提醒，以及 OpenChamber 2.5.0 切换到 2.1.1 后端并重载后的真实提醒。已对 2.1.1 与 2.1.3 官方 npm 发布包完成静态校验，确认插件与核心事件兼容，但 2.1.3 的真实用户会话尚未完成端到端验收。这不代表支持 2.x 稳定版（>= 2.1.1 且 < 3.0.0）以外的版本，也不代表多效果播放结束时机及 Codex Stop-hook 边界检查全部完成。详见[设计与验证记录](docs/design/opencode-support.md)。
 
 ## ⚙️ 工作原理
 

@@ -135,10 +135,14 @@ struct GeneralSettingsView: View {
                     Text(verbatim: model.opencodeIntegration.detectedVersion ?? "—")
                         .foregroundStyle(.secondary)
                 }
-                Text("Requires the actual OpenCode backend to be V2.1.1. OpenChamber may use a different version than the detected CLI.")
+                Text("CueDex supports stable OpenCode 2.x backends (>= 2.1.1, < 3.0.0). OpenChamber may use a different version than the detected CLI.")
                     .font(.caption).foregroundStyle(.secondary)
                 Text("After installation, finish active work and reload your client's OpenCode service. CueDex will not restart it. Configured means installed, not connected.")
                     .font(.caption).foregroundStyle(.secondary)
+                if let notice = model.opencodeIntegration.compatibilityNotice {
+                    Label(LocalizedStringKey(notice), systemImage: "exclamationmark.triangle")
+                        .font(.caption).foregroundStyle(.orange)
+                }
             }
             if let error = source == .codex ? integration.lastError : model.opencodeIntegration.lastError {
                 Text(LocalizedStringKey(error)).font(.caption).foregroundStyle(.red)

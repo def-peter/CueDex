@@ -67,6 +67,7 @@ final class AppModel {
         opencodeIntegration.refresh()
 #if !DEBUG
         integration.refreshHelperIfInstalled()
+        opencodeIntegration.refreshPluginIfInstalled()
 #endif
         Task { await updates.checkAutomaticallyIfNeeded() }
         Task { await opencodeIntegration.checkVersion() }

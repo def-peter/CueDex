@@ -707,19 +707,18 @@
         }
       }
     },
-    "Only OpenCode V2.1.1 is verified. Install that version before enabling integration." : {
-      "extractionState" : "stale",
+    "The detected OpenCode version is outside the supported range. CueDex supports stable OpenCode 2.x (>= 2.1.1, < 3.0.0), so installation was not performed." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Only OpenCode V2.1.1 is verified. Install that version before enabling integration."
+            "value" : "The detected OpenCode version is outside the supported range. CueDex supports stable OpenCode 2.x (>= 2.1.1, < 3.0.0), so installation was not performed."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "目前仅核实 OpenCode V2.1.1，请安装该版本后再启用接入。"
+            "value" : "检测到的 OpenCode 版本不在支持范围内。CueDex 支持 OpenCode 2.x 稳定版（>= 2.1.1 且 < 3.0.0），未执行安装。"
           }
         }
       }
@@ -918,18 +917,50 @@
         }
       }
     },
-    "Requires the actual OpenCode backend to be V2.1.1. OpenChamber may use a different version than the detected CLI." : {
+    "CueDex supports stable OpenCode 2.x backends (>= 2.1.1, < 3.0.0). OpenChamber may use a different version than the detected CLI." : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Requires the actual OpenCode backend to be V2.1.1. OpenChamber may use a different version than the detected CLI."
+            "value" : "CueDex supports stable OpenCode 2.x backends (>= 2.1.1, < 3.0.0). OpenChamber may use a different version than the detected CLI."
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "实际运行的 OpenCode 后端必须为 V2.1.1。OpenChamber 使用的版本可能与检测到的 CLI 不同。"
+            "value" : "CueDex 支持 OpenCode 2.x 稳定版后端（>= 2.1.1 且 < 3.0.0）。OpenChamber 实际使用的版本可能与检测到的 CLI 不同。"
+          }
+        }
+      }
+    },
+    "OpenCode CLI was not detected, so installation was not performed." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OpenCode CLI was not detected, so installation was not performed."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未检测到 OpenCode CLI，未执行安装。"
+          }
+        }
+      }
+    },
+    "Unable to update the CueDex OpenCode plugin. Existing unowned files are never replaced." : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to update the CueDex OpenCode plugin. Existing unowned files are never replaced."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法更新 CueDex OpenCode 插件，不会覆盖不属于 CueDex 的已有文件。"
           }
         }
       }

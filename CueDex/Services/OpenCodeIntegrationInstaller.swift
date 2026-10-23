@@ -4,7 +4,17 @@ import Observation
 @MainActor
 @Observable
 final class OpenCodeIntegrationInstaller {
-    static let supportedVersion = "2.1.1"
+    nonisolated static func supportsVersion(_ version: String?) -> Bool {
+        guard let version,
+              version.range(
+                of: #"\Av?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(\+[0-9A-Za-z-]+(\.[0-9A-Za-z-]+)*)?\z"#,
+                options: .regularExpression
+              ) != nil else { return false }
+        let core = version.drop(while: { $0 == "v" }).split(separator: "+")[0]
+        let parts = core.split(separator: ".").compactMap { Int($0) }
+        guard parts.count == 3, parts.allSatisfy({ $0 <= 9_007_199_254_740_991 }) else { return false }
+        return parts[0] == 2 && (parts[1] > 1 || (parts[1] == 1 && parts[2] >= 1))
+    }
     private static let ownership = "// CueDex managed OpenCode V2 bridge."
     let paths: CueDexPaths
     private let fileManager: FileManager
@@ -13,6 +23,7 @@ final class OpenCodeIntegrationInstaller {
     private(set) var isInstalled = false
     private(set) var isCheckingVersion = false
     private(set) var detectedVersion: String?
+    private(set) var compatibilityNotice: String?
     private(set) var lastError: String?
 
     init(
@@ -43,13 +54,17 @@ final class OpenCodeIntegrationInstaller {
         guard !isCheckingVersion else { return }
         isCheckingVersion = true
         detectedVersion = await versionProvider()
+        compatibilityNotice = nil
         isCheckingVersion = false
     }
 
     func install() async {
         await checkVersion()
-        guard detectedVersion == Self.supportedVersion else {
-            lastError = "Only OpenCode V2.1.1 is verified. Install that version before enabling integration."
+        lastError = nil
+        guard Self.supportsVersion(detectedVersion) else {
+            compatibilityNotice = detectedVersion == nil
+                ? "OpenCode CLI was not detected, so installation was not performed."
+                : "The detected OpenCode version is outside the supported range. CueDex supports stable OpenCode 2.x (>= 2.1.1, < 3.0.0), so installation was not performed."
             return
         }
         do {
@@ -74,6 +89,7 @@ final class OpenCodeIntegrationInstaller {
     }
 
     func uninstall() {
+        compatibilityNotice = nil
         do {
             // Invalidate still-loaded instances before removing the discovered file.
             if fileManager.fileExists(atPath: paths.opencodeGateURL.path) {
@@ -87,6 +103,25 @@ final class OpenCodeIntegrationInstaller {
             lastError = nil
         } catch {
             lastError = "Unable to remove the CueDex OpenCode plugin. Existing unowned files are never removed."
+        }
+        refresh()
+    }
+
+    func refreshPluginIfInstalled() {
+        refresh()
+        guard isInstalled else { return }
+        do {
+            let existing = try String(contentsOf: paths.opencodePluginURL, encoding: .utf8)
+            guard existing.hasPrefix(Self.ownership) else { throw InstallerError.foreignFile }
+            let generation = try String(contentsOf: paths.opencodeGateURL, encoding: .utf8)
+            guard !generation.isEmpty else { return }
+            let script = try Self.render(try pluginTemplate(), paths: paths, generation: generation)
+            guard existing != script else { return }
+            try script.write(to: paths.opencodePluginURL, atomically: true, encoding: .utf8)
+            try fileManager.setAttributes([.posixPermissions: 0o600], ofItemAtPath: paths.opencodePluginURL.path)
+            lastError = nil
+        } catch {
+            lastError = "Unable to update the CueDex OpenCode plugin. Existing unowned files are never replaced."
         }
         refresh()
     }
@@ -134,8 +169,7 @@ final class OpenCodeIntegrationInstaller {
                         return
                     }
                     let text = String(decoding: output.fileHandleForReading.readDataToEndOfFile(), as: UTF8.self)
-                    let version = text.split(whereSeparator: \.isWhitespace).last.map(String.init)?
-                        .replacingOccurrences(of: "v", with: "")
+                    let version = text.split(whereSeparator: \.isWhitespace).last.map(String.init)
                     continuation.resume(returning: process.terminationStatus == 0 ? version : nil)
                 } catch { continuation.resume(returning: nil) }
             }

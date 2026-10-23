@@ -4,6 +4,15 @@ import { createHash, randomUUID } from "node:crypto";
 import { execFile } from "node:child_process";
 import path from "node:path";
 
+export function supportsVersion(version) {
+    if (typeof version !== "string") return false;
+    const match = /^v?(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/.exec(version);
+    if (!match || match[0] !== version) return false;
+    const [major, minor, patch] = match.slice(1, 4).map(Number);
+    return [major, minor, patch].every(Number.isSafeInteger)
+        && major === 2 && (minor > 1 || (minor === 1 && patch >= 1));
+}
+
 // Kept dependency-free: Plugin.define in @opencode/plugin@2.1.1 is the identity
 // function. This is its documented { id, setup } Promise plugin contract.
 export function createCompletionTracker({ session, emit, enabled, now = Date.now }) {
@@ -75,7 +84,9 @@ export async function writeCompletion(event, { directory, enabled, launch }) {
 export default {
     id: "cuedex.attention",
     setup(ctx) {
-        if (ctx.app.version.replace(/^v/, "") !== "2.1.1") return;
+        if (!supportsVersion(ctx?.app?.version)
+            || typeof ctx?.session?.get !== "function"
+            || typeof ctx?.event?.subscribe !== "function") return;
         const eventsDirectory = "__CUEDEX_EVENTS__";
         const gate = "__CUEDEX_GATE__";
         const generation = "__CUEDEX_GENERATION__";

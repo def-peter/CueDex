@@ -216,8 +216,20 @@ struct CueDexTests {
                 "OpenCode 提醒依赖全局插件。点击「启用集成」会将插件安装到下方路径；仅安装 CueDex 不会自动生效。"
             ),
             (
-                "Requires the actual OpenCode backend to be V2.1.1. OpenChamber may use a different version than the detected CLI.",
-                "实际运行的 OpenCode 后端必须为 V2.1.1。OpenChamber 使用的版本可能与检测到的 CLI 不同。"
+                "CueDex supports stable OpenCode 2.x backends (>= 2.1.1, < 3.0.0). OpenChamber may use a different version than the detected CLI.",
+                "CueDex 支持 OpenCode 2.x 稳定版后端（>= 2.1.1 且 < 3.0.0）。OpenChamber 实际使用的版本可能与检测到的 CLI 不同。"
+            ),
+            (
+                "The detected OpenCode version is outside the supported range. CueDex supports stable OpenCode 2.x (>= 2.1.1, < 3.0.0), so installation was not performed.",
+                "检测到的 OpenCode 版本不在支持范围内。CueDex 支持 OpenCode 2.x 稳定版（>= 2.1.1 且 < 3.0.0），未执行安装。"
+            ),
+            (
+                "OpenCode CLI was not detected, so installation was not performed.",
+                "未检测到 OpenCode CLI，未执行安装。"
+            ),
+            (
+                "Unable to update the CueDex OpenCode plugin. Existing unowned files are never replaced.",
+                "无法更新 CueDex OpenCode 插件，不会覆盖不属于 CueDex 的已有文件。"
             ),
             (
                 "After installation, finish active work and reload your client's OpenCode service. CueDex will not restart it. Configured means installed, not connected.",

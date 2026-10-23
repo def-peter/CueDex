@@ -4,7 +4,7 @@
 
 双来源实现已随 v1.0.7 发布。2026-10-21，用户确认本机 OpenCode CLI 可触发真实提醒；OpenChamber 2.5.0 改用本机 OpenCode V2.1.1 并重载后，用户也确认收到真实主会话完成提醒。
 
-已观察到上述 OpenChamber 后端加载受管理插件，并完成用户确认的真实提醒投递。该结果不覆盖其他版本、所有排除事件或多效果播放结束时机。首版仍仅支持 V2.1.1，不兼容 V1，也不据此宣称支持所有 V2 版本。下方实现阶段记录保留为历史证据，最新实机结果见文末。
+OpenCode 支持范围扩展至 2.x 稳定版（>= 2.1.1 且 < 3.0.0），允许后续 2.x 次版本与补丁，拒绝预发布和格式非法版本。已完成官方 npm 发布包 2.1.1 与 2.1.3 的 SHA-512 校验与静态源码比对，确认插件与核心事件定义兼容；但 2.1.3 的真实用户会话尚未完成端到端实测验收。依然不兼容 V1、不支持 3.x 或其他范围外版本，不覆盖远程服务器、SSH 或容器。下方保留历史阶段记录，最新实机与版本核验见文末。
 
 ## 产品边界
 
@@ -237,3 +237,21 @@ xcodebuild -project CueDex.xcodeproj -scheme CueDex \
 - 本轮修正发生在会话执行中途，插件热加载后可能缺少本轮执行起点；依照现有保守策略，不将本轮是否提醒作为连接成败的判断。下一轮新主会话请求的真实提醒、是否仍出现旧 Debug 进程，以及 Codex 中的人工信任与真实完成提醒，仍须实机确认；不将隔离测试或预览冒充这些结果。
 - 收尾工程验证：`xcodebuild -project CueDex.xcodeproj -scheme CueDex -destination 'platform=macOS' -derivedDataPath .build/TestDerivedData CODE_SIGNING_ALLOWED=NO -parallel-testing-enabled NO test` 通过 **63 项单元测试及 3 项 UI 测试**；`node --test script/opencode_bridge.test.mjs` 通过 **16 项桥接测试**。日志：`.build/integration-guides-tests.log`。测试后复查仍只有 `/Applications/CueDex.app` 正式版进程，插件只有目标路径这一处改动。
 - 使用当前 SwiftUI 源码、隔离的 UserDefaults、只读示例路径及禁用的 runtime services 生成中英文原生表单截图，核对钩子事件/命令、信任指引、插件路径和版本/重载说明无截断。截图采用 660 pt 原生宽度、加长高度展示滚动表单的完整内容，不代表将正式设置窗口改高：`.build/IntegrationGuideCapture/integration-guides-zh-Hans.png`、`.build/IntegrationGuideCapture/integration-guides-en.png`。未启用或停用用户的真实集成，未提交、推送或发布。
+
+### 2026-10-23 OpenCode 2.1.3 兼容性核验与 2.x 版本范围扩展
+
+- **策略调整**：针对 OpenCode 升级到 2.1.3 后因精确锁定 2.1.1 无法启用的问题，将支持策略由单版本锁定调整为支持 2.x 稳定版范围（`>= 2.1.1` 且 `< 3.0.0`），允许后续 2.x 次版本及补丁。版本解析允许 `v` 前缀及 SemVer 构建元数据，严格拒绝预发布版本（prerelease）及格式非法版本。安装门控若拒绝执行，原有已安装插件与 gate 令牌文件保持不变。
+- **静态包与契约核验**：
+  - 对官方 npm 发布包 2.1.1 与 2.1.3（`@opencode/schema`、`@opencode/plugin`、`@opencode/protocol`、`@opencode/core`）进行了 SHA-512 完整性校验。
+  - `@opencode/plugin` 发布包中全部 126 个 JS/TS 文件字节级完全相同。
+  - `session-event.js` 仅对 Schema annotation 顺序进行了微调，相关事件数据定义未发生改变；`session.js`、`event.js` 以及 `protocol` 中的 session/event JS 产物均保持一致。
+  - `core` 的主回复 llm 编译代码在归一化后完全一致；`execution` 模块仅变更了 `interrupt` 参数处理，与成功事件（`session.execution.succeeded`）的发布逻辑无关。
+- **运行时与桥接安全**：
+  - 插件端除执行版本范围检查外，增加运行时前置检查：要求 `ctx.session.get` 与 `ctx.event.subscribe` 必须为函数；继续保留原有对会话形状与事件完整性的防御性校验。
+  - 应用程序正式版在启动时刷新已启用的受管理旧桥接：更新脚本模板与正式应用路径，但完整保留原有 `generation` 令牌，避免无端废弃正在运行中的旧实例；刷新不按本机 CLI 检测版本进行阻拦，由插件在运行时独立核对其实际宿主后端的真实版本。
+  - 刷新严格遵守安全边界：未启用集成时不自动启用、绝不改动非 CueDex 管理的文件、内容相同时跳过写盘、Debug 构建绝不重写生产环境的已安装桥接。
+- **验证边界与限制**：
+  - 工程自动化回归已完成：`xcodebuild Debug test` 通过 68 项单元测试与 3 项 UI 测试（0 失败），日志见 `.build/opencode-version-range-tests.log`；`node --test script/opencode_bridge.test.mjs` 通过 18 项桥接测试，覆盖 2.1.3 实际 setup 流程、接收受控事件流、写入元数据、校验正确唤醒参数（mock 进程启动）、移除 gate 后停止投递及清理。
+  - Release 双架构构建已完成：经 `lipo` 核对包含 `x86_64` 与 `arm64`，打包内置的插件资源与源码模板完全一致，日志见 `.build/opencode-version-range-release.log`；构建产物未在此次验证中启动或安装。
+  - 上述结果基于受控与模拟环境，2.1.3 真实用户会话尚未完成端到端实机验收，不宣称已全面实测通过。
+  - 修复阶段与工程回归已完成，现按用户请求进入 v1.0.9（build 15）发布流程；当前未自动替换本机正在运行的 App 或 live 集成环境（需待用户安装新版并在启动时安全刷新已启用的插件后生效）；保留远程/SSH/容器环境不支持及 OpenChamber 内置后端可能与 CLI 不同的提示，Codex Stop-hook 既有边界保持不变。
