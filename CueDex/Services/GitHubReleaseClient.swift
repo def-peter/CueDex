@@ -32,7 +32,8 @@ struct GitHubReleaseClient {
         let response = try JSONDecoder().decode(ReleaseResponse.self, from: data)
         return AppRelease(
             version: AppVersion.normalized(response.tagName),
-            pageURL: response.pageURL
+            pageURL: response.pageURL,
+            assets: response.assets ?? []
         )
     }
 }
@@ -41,10 +42,12 @@ private extension GitHubReleaseClient {
     struct ReleaseResponse: Decodable {
         let tagName: String
         let pageURL: URL
+        let assets: [ReleaseAsset]?
 
         enum CodingKeys: String, CodingKey {
             case tagName = "tag_name"
             case pageURL = "html_url"
+            case assets
         }
     }
 }

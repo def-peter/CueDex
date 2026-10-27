@@ -28,6 +28,12 @@ struct ContentView: View {
             isPresented: updateAlertPresented,
             presenting: model.updates.presentedRelease
         ) { release in
+            if model.updates.canDownload(release) {
+                Button("Download Update") {
+                    model.updates.dismissUpdateAlert()
+                    model.updates.presentDownload(for: release)
+                }
+            }
             Button("View Release") {
                 openURL(release.pageURL)
                 model.updates.dismissUpdateAlert()
@@ -37,6 +43,12 @@ struct ContentView: View {
             }
         } message: { release in
             Text("CueDex \(release.version) is available. You are using \(model.updates.currentVersion).")
+        }
+        .sheet(isPresented: Binding(
+            get: { model.updates.isDownloadPresented },
+            set: { model.updates.isDownloadPresented = $0 }
+        )) {
+            UpdateDownloadView(updates: model.updates)
         }
     }
 

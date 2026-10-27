@@ -52,7 +52,7 @@ The recordings show CueDex running around a real macOS Codex workspace. Colors a
 - 🗣️ Custom spoken messages and system voices through Apple's native `AVSpeechSynthesizer`
 - 🌙 Pause, quiet hours, launch at login, and one-click cue previews
 - 🌐 Runtime Simplified Chinese and English switching, with Chinese as the default
-- 🔄 Lightweight daily GitHub Release checks plus a manual check in About
+- 🔄 In-app update downloads with SHA-256 verification and installer mounting, plus lightweight daily notifications and manual checks
 - 🔒 Event-driven local processing with no polling, analytics, or prompt/response storage
 
 ## 📥 Install
@@ -70,7 +70,7 @@ The recordings show CueDex running around a real macOS Codex workspace. Colors a
 > not a malware detection. Open **System Settings > Privacy & Security**, find
 > the CueDex message, choose **Open Anyway**, and confirm.
 
-Every Release includes a SHA-256 file for verifying download integrity.
+**Updating:** When an update is available, click **Download Update** to download the matching DMG for your Mac (`arm64` or `x86_64`) and verify its size and SHA-256 checksum in the background. After verification, click **Open Installer** to mount the DMG, then quit the running CueDex and drag the new app into `/Applications` to replace it. CueDex does not auto-replace files, elevate privileges, or remove quarantine flags. You can also view the release page to download manually at any time.
 
 ## 🔌 Connect to Codex
 
@@ -121,7 +121,7 @@ The plugin targets successful main-session responses, not child sessions, failur
 
 Codex invokes a small local helper for the main agent's `Stop` event. OpenCode uses a global V2 plugin to observe execution and primary-step lifecycle events. Both write metadata-only local event files under `~/Library/Application Support/CueDex` and wake the app. A dispatch file-system source consumes fresh events without polling. CueDex deduplicates delivery, routes it to the matching source profile, and queues cues without interrupting playback. Events older than 60 seconds are discarded; pause and quiet hours clear pending cues without replaying them later.
 
-Prompt and response content are never persisted or sent anywhere. CueDex only contacts the GitHub Releases API for its low-frequency update check.
+Prompt and response content are never persisted or sent anywhere. CueDex only accesses the network to check the GitHub Releases API and to download official release assets when you choose to update.
 
 ## 🛠️ Development
 

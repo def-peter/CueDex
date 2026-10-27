@@ -106,7 +106,7 @@ struct AboutSettingsView: View {
                     Label("Check for Updates", systemImage: "arrow.clockwise")
                 }
             }
-            .disabled(isChecking)
+            .disabled(isChecking || updates.isDownloading)
 
             switch updates.state {
             case .idle, .checking:
@@ -115,7 +115,35 @@ struct AboutSettingsView: View {
                 Text("You're up to date.")
                     .foregroundStyle(.secondary)
             case let .updateAvailable(release):
-                Link("View Release", destination: release.pageURL)
+                HStack {
+                    if updates.canDownload(release) {
+                        Button("Download Update") { updates.presentDownload(for: release) }
+                    }
+                    Link("View Release", destination: release.pageURL)
+                }
+                if updates.downloadRelease == release {
+                    Group {
+                        switch updates.downloadState {
+                        case .downloading:
+                            Text("Downloading Update…")
+                        case .verifying:
+                            Text("Verifying Download…")
+                        case .ready:
+                            Text("Installer Ready")
+                        case .opening:
+                            Text("Opening Installer…")
+                        case .opened:
+                            Text("Installer Opened")
+                        case .failed(let message):
+                            Text(LocalizedStringKey(message))
+                                .foregroundStyle(.red)
+                        case .idle:
+                            EmptyView()
+                        }
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                }
             case .failed:
                 Text("Unable to check for updates.")
                     .foregroundStyle(.secondary)

@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import Observation
 import OSLog
@@ -13,13 +14,32 @@ final class UpdateController {
         case failed
     }
 
+    enum DownloadState: Equatable {
+        case idle
+        case downloading(Double)
+        case verifying
+        case ready
+        case opening
+        case opened
+        case failed(String)
+    }
+
     private static let lastAutomaticCheckKey = "cuedex.updates.lastAutomaticCheck"
     let currentVersion: String
     private(set) var state: State = .idle
     private(set) var presentedRelease: AppRelease?
+    private(set) var downloadRelease: AppRelease?
+    private(set) var downloadState: DownloadState = .idle
+    var isDownloadPresented = false
 
     private let client: GitHubReleaseClient
     private let defaults: UserDefaults
+    private let downloader: DmgUpdateDownloader
+    private let architecture: String
+    private let openInstaller: (URL) throws -> Void
+    @ObservationIgnored private var downloadTask: Task<Void, Never>?
+    @ObservationIgnored private var operationID = UUID()
+    private var downloadedUpdate: DownloadedUpdate?
     private let logger = Logger(subsystem: "com.peter.CueDex", category: "Updates")
 
     init(
@@ -27,11 +47,104 @@ final class UpdateController {
             forInfoDictionaryKey: "CFBundleShortVersionString"
         ) as? String ?? "0",
         client: GitHubReleaseClient? = nil,
-        defaults: UserDefaults = .standard
+        defaults: UserDefaults = .standard,
+        downloader: DmgUpdateDownloader? = nil,
+        architecture: String = DmgUpdateDownloader.architecture,
+        openInstaller: @escaping (URL) throws -> Void = { url in
+            guard NSWorkspace.shared.open(url) else { throw UpdateDownloadError.openFailed }
+        }
     ) {
         self.currentVersion = currentVersion
         self.client = client ?? GitHubReleaseClient()
         self.defaults = defaults
+        self.downloader = downloader ?? DmgUpdateDownloader(
+            directory: CueDexPaths.live().applicationSupport.appending(path: "Updates", directoryHint: .isDirectory)
+        )
+        self.architecture = architecture
+        self.openInstaller = openInstaller
+    }
+
+    var isDownloading: Bool {
+        switch downloadState {
+        case .downloading, .verifying, .opening: true
+        default: false
+        }
+    }
+
+    func canDownload(_ release: AppRelease) -> Bool {
+        release.updatePackage(for: architecture) != nil
+    }
+
+    func presentDownload(for release: AppRelease) {
+        guard !isDownloading || downloadRelease == release else { return }
+        if downloadRelease != release {
+            downloadRelease = release
+            downloadState = .idle
+            downloadedUpdate = nil
+        }
+        isDownloadPresented = true
+        if downloadState == .idle { startDownload() }
+    }
+
+    func startDownload() {
+        guard !isDownloading, let release = downloadRelease,
+              let package = release.updatePackage(for: architecture) else { return }
+        downloadedUpdate = nil
+        downloadState = .downloading(0)
+        let id = UUID()
+        operationID = id
+        downloadTask = Task {
+            defer { if operationID == id { downloadTask = nil } }
+            do {
+                let update = try await downloader.download(package) { [self] progress in
+                    Task { @MainActor in
+                        guard self.operationID == id else { return }
+                        switch (self.downloadState, progress) {
+                        case (.downloading, .downloading(let value)):
+                            self.downloadState = .downloading(value)
+                        case (.downloading, .verifying):
+                            self.downloadState = .verifying
+                        default: break
+                        }
+                    }
+                }
+                guard operationID == id, !Task.isCancelled else { return }
+                downloadedUpdate = update
+                downloadState = .ready
+            } catch {
+                guard operationID == id, !Task.isCancelled else { return }
+                downloadState = .failed(error is UpdateDownloadError
+                    ? "Verification failed. The downloaded file does not match the release checksum."
+                    : "Download failed. Check your network connection and try again.")
+                logger.error("Update download failed: \(error.localizedDescription, privacy: .public)")
+            }
+        }
+    }
+
+    func cancelDownload() {
+        guard downloadTask != nil else { return }
+        operationID = UUID()
+        downloadTask?.cancel()
+        downloadTask = nil
+        downloadState = .idle
+    }
+
+    func openDownloadedInstaller() async {
+        guard !isDownloading, let update = downloadedUpdate else { return }
+        downloadState = .opening
+        do {
+            try await downloader.verify(update)
+        } catch {
+            downloadedUpdate = nil
+            downloadState = .failed("Verification failed. The downloaded file does not match the release checksum.")
+            return
+        }
+        do {
+            try openInstaller(update.url)
+            downloadState = .opened
+        } catch {
+            downloadState = .failed("Unable to open the installer. You can view the release to download it manually.")
+        }
     }
 
     func checkAutomaticallyIfNeeded(now: Date = Date()) async {
@@ -43,6 +156,7 @@ final class UpdateController {
     }
 
     func checkManually() async {
+        guard !isDownloading else { return }
         await performCheck()
         if state != .failed {
             defaults.set(Date(), forKey: Self.lastAutomaticCheckKey)
@@ -63,7 +177,7 @@ final class UpdateController {
     }
 
     private func performCheck() async {
-        guard state != .checking else { return }
+        guard state != .checking, !isDownloading else { return }
         state = .checking
 
         do {
